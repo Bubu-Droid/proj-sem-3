@@ -115,6 +115,10 @@
 }
 
 
+% Roll number shown on the title page; set with \rollno{...} in the preamble
+\newcommand{\rollno}[1]{\gdef\@rollno{#1}}
+\rollno{}
+
 \newcommand{\maketitlepage}[4]{%
     \thispagestyle{empty}
     \begin{titlepage}
@@ -127,10 +131,10 @@
         % \vspace{1cm} % Increased space after title
         \doublerule
         % \vspace{0.25cm} % Increased space rules
-        {\Large\textsc{Avigyan Chakraborty}\par}
-        {\large\textsc{Roll No.: \textbf{BS2516}}\par}
+        {\Large\textsc{#2}\par}
+        {\large\textsc{Roll No.: \textbf{\@rollno}}\par}
         \vspace{0.25cm} % Increased space after name
-        {\large\textsc{\thedate}\par}
+        {\large\textsc{#3}\par}
         % \vspace{0.5cm} % Increased space after name
         \doublerule
         % \vspace{1cm} % Increased space before abstract
