@@ -344,25 +344,26 @@ you move on.</li>
 └── slides/
     └── slides.tex</code></pre>
 <h3 id="02-python-environment">0.2 Python environment</h3>
-<p><code>pylidc</code> is old and breaks with newer libraries. Use an
-isolated environment with an older Python:</p>
+<p>The environment is managed with <strong>uv</strong> and is already
+set up in <code>pyproject.toml</code> / <code>uv.lock</code>.
+<code>pylidc</code> 0.2.3 is old: it needs <code>pkg_resources</code>
+and the pre-2.0 NumPy/SQLAlchemy APIs, so Python is pinned to 3.11 with
+<code>numpy&lt;1.24</code>, <code>sqlalchemy&lt;2.0</code>,
+<code>setuptools&lt;80</code> (and matching
+pandas/scipy/scikit-image).</p>
 <div class="sourceCode" id="cb2"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> venv <span class="at">--python</span> 3.11 .venv      <span class="co"># or: python3.11 -m venv .venv</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> .venv/bin/activate</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pylidc pandas scikit-image scipy</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-c</span> <span class="st">&quot;import pylidc as pl; print(pl.query(pl.Scan).count())&quot;</span></span></code></pre></div>
-<p>If the import fails with errors mentioning
-<code>np.int</code>/<code>np.float</code> or SQLAlchemy, pin older
-versions:</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="st">&quot;numpy&lt;1.24&quot;</span> <span class="st">&quot;sqlalchemy&lt;2.0&quot;</span></span></code></pre></div>
-<p>The last command should print <strong>1018</strong> (the number of CT
-scans). The annotation database ships inside the package, so no DICOM
-download is needed for anything in this project.</p>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python <span class="at">-c</span> <span class="st">&quot;import pylidc as pl; print(pl.query(pl.Scan).count(), pl.query(pl.Annotation).count())&quot;</span></span></code></pre></div>
+<p>This prints <strong>1018 6859</strong> (CT scans, annotations). The
+annotation database ships inside the package, so no DICOM download is
+needed for anything in this project.</p>
 <h3 id="03-r-environment">0.3 R environment</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">&quot;MASS&quot;</span>, <span class="st">&quot;ordinal&quot;</span>, <span class="st">&quot;brant&quot;</span>, <span class="st">&quot;ordinalNet&quot;</span>, <span class="st">&quot;car&quot;</span>,</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;tidyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>, <span class="st">&quot;corrplot&quot;</span>, <span class="st">&quot;xtable&quot;</span>))</span></code></pre></div>
-<p>☐ <code>pylidc</code> returns 1018 scans; all R packages load.</p>
+<p>Step 3 (<code>R/01_clean.R</code>) needs only base R. Install the
+rest before Step 4:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">&quot;ordinal&quot;</span>, <span class="st">&quot;brant&quot;</span>, <span class="st">&quot;ordinalNet&quot;</span>, <span class="st">&quot;car&quot;</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;ggplot2&quot;</span>, <span class="st">&quot;corrplot&quot;</span>, <span class="st">&quot;xtable&quot;</span>))</span></code></pre></div>
+<p>☐ <code>pylidc</code> returns 1018 scans and 6859 annotations; all R
+packages load.</p>
 <hr />
 <h2 id="step-1--background-reading-week-1-in-parallel-with-step-2">Step
 1 — Background reading (Week 1, in parallel with Step 2)</h2>
@@ -464,68 +465,61 @@ nodule is your unit of analysis.</strong></li>
 annotations.</p>
 <h3 id="22-extraction-script-pythonextractpy">2.2 Extraction script
 (<code>python/extract.py</code>)</h3>
-<p>Write one row per <strong>annotation</strong>, carrying patient, scan
-and nodule IDs so you can aggregate later.</p>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pylidc <span class="im">as</span> pl</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.spatial <span class="im">import</span> ConvexHull</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>RATINGS <span class="op">=</span> [<span class="st">&quot;subtlety&quot;</span>, <span class="st">&quot;internalStructure&quot;</span>, <span class="st">&quot;calcification&quot;</span>, <span class="st">&quot;sphericity&quot;</span>,</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;margin&quot;</span>, <span class="st">&quot;lobulation&quot;</span>, <span class="st">&quot;spiculation&quot;</span>, <span class="st">&quot;texture&quot;</span>, <span class="st">&quot;malignancy&quot;</span>]</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> shape_features(ann, scan):</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Extra geometric features from the binary mask (no DICOM needed).&quot;&quot;&quot;</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    mask <span class="op">=</span> ann.boolean_mask()</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    sp <span class="op">=</span> np.array([scan.pixel_spacing, scan.pixel_spacing, scan.slice_spacing])</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    pts <span class="op">=</span> np.argwhere(mask) <span class="op">*</span> sp                     <span class="co"># voxel coordinates in mm</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> {<span class="st">&quot;n_voxels&quot;</span>: <span class="bu">int</span>(mask.<span class="bu">sum</span>()),</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;n_slices&quot;</span>: <span class="bu">int</span>(mask.shape[<span class="dv">2</span>]),</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;bbox_x&quot;</span>: mask.shape[<span class="dv">0</span>] <span class="op">*</span> sp[<span class="dv">0</span>],</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;bbox_y&quot;</span>: mask.shape[<span class="dv">1</span>] <span class="op">*</span> sp[<span class="dv">1</span>],</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;bbox_z&quot;</span>: mask.shape[<span class="dv">2</span>] <span class="op">*</span> sp[<span class="dv">2</span>]}</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(pts) <span class="op">&gt;=</span> <span class="dv">4</span>:</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        ev <span class="op">=</span> np.sort(np.linalg.eigvalsh(np.cov(pts.T)))[::<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        out[<span class="st">&quot;elongation&quot;</span>] <span class="op">=</span> np.sqrt(ev[<span class="dv">1</span>] <span class="op">/</span> ev[<span class="dv">0</span>]) <span class="cf">if</span> ev[<span class="dv">0</span>] <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        out[<span class="st">&quot;flatness&quot;</span>]   <span class="op">=</span> np.sqrt(ev[<span class="dv">2</span>] <span class="op">/</span> ev[<span class="dv">0</span>]) <span class="cf">if</span> ev[<span class="dv">0</span>] <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>            hull <span class="op">=</span> ConvexHull(pts)</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>            out[<span class="st">&quot;convex_volume&quot;</span>] <span class="op">=</span> hull.volume</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> <span class="pp">Exception</span>:</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>            out[<span class="st">&quot;convex_volume&quot;</span>] <span class="op">=</span> np.nan</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> scan <span class="kw">in</span> pl.query(pl.Scan).<span class="bu">all</span>():</span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>        clusters <span class="op">=</span> scan.cluster_annotations(verbose<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;skip </span><span class="sc">{</span>scan<span class="sc">.</span>patient_id<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> nod_idx, anns <span class="kw">in</span> <span class="bu">enumerate</span>(clusters):</span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> reader_idx, ann <span class="kw">in</span> <span class="bu">enumerate</span>(anns):</span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>            row <span class="op">=</span> {<span class="st">&quot;patient_id&quot;</span>: scan.patient_id,</span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;scan_id&quot;</span>: scan.<span class="bu">id</span>,</span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;nodule_id&quot;</span>: <span class="ss">f&quot;</span><span class="sc">{</span>scan<span class="sc">.</span><span class="bu">id</span><span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>nod_idx<span class="sc">}</span><span class="ss">&quot;</span>,</span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;ann_id&quot;</span>: ann.<span class="bu">id</span>,</span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;reader_slot&quot;</span>: reader_idx,       <span class="co"># NOT a stable reader identity</span></span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;n_readers&quot;</span>: <span class="bu">len</span>(anns),</span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;diameter&quot;</span>: ann.diameter,</span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;surface_area&quot;</span>: ann.surface_area,</span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;volume&quot;</span>: ann.volume}</span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>            row.update({r: <span class="bu">getattr</span>(ann, r) <span class="cf">for</span> r <span class="kw">in</span> RATINGS})</span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>            row.update(shape_features(ann, scan))</span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>            rows.append(row)</span>
-<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(rows).to_csv(<span class="st">&quot;data/raw/annotations.csv&quot;</span>, index<span class="op">=</span><span class="va">False</span>)</span></code></pre></div>
-<p>Run it once (it takes a while: mask building is the slow part) and
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python python/extract.py</span></code></pre></div>
+<p>Writes <code>data/raw/annotations.csv</code>, the <strong>master
+file</strong>, with one row per <strong>annotation</strong>. It carries
+patient, scan and nodule IDs so you can aggregate later. Run it once (it
+is slow: pylidc's surface-area and volume computations dominate) and
 never edit the output by hand.</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Columns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IDs</td>
+<td><code>patient_id</code>, <code>scan_id</code>,
+<code>nodule_id</code> (<code>&lt;scan_id&gt;_&lt;cluster&gt;</code>),
+<code>ann_id</code>, <code>reader_slot</code> (<strong>not</strong> a
+stable reader identity), <code>n_readers</code></td>
+</tr>
+<tr>
+<td>Scan geometry</td>
+<td><code>pixel_spacing</code>, <code>slice_thickness</code>,
+<code>slice_spacing</code></td>
+</tr>
+<tr>
+<td>pylidc geometry</td>
+<td><code>diameter</code> (mm), <code>surface_area</code> (mm²),
+<code>volume</code> (mm³)</td>
+</tr>
+<tr>
+<td>Mask shape</td>
+<td><code>n_voxels</code>, <code>n_slices</code>,
+<code>bbox_x/y/z</code> (mm), <code>elongation</code>,
+<code>flatness</code> (principal-axis ratios, (0, 1]),
+<code>convex_volume</code> (mm³, convex hull counted in voxels),
+<code>solidity</code> (<code>n_voxels</code> / hull voxels, (0, 1])</td>
+</tr>
+<tr>
+<td>Ratings</td>
+<td><code>subtlety</code>, <code>internalStructure</code>,
+<code>calcification</code>, <code>sphericity</code>,
+<code>margin</code>, <code>lobulation</code>, <code>spiculation</code>,
+<code>texture</code>, <strong><code>malignancy</code></strong></td>
+</tr>
+</tbody>
+</table>
+<p>Nodules drawn on a single slice are flat in 3D, so their convex hull
+is taken in 2D.</p>
 <h3 id="23-sanity-checks">2.3 Sanity checks</h3>
 <ul>
-<li>Number of annotations, nodules, scans, patients. Expect roughly
-6,800 annotations and roughly 2,600 nodule clusters; check against the
-pylidc docs/paper.</li>
+<li>Number of annotations, nodules, scans, patients. Expect 6,859
+annotations and roughly 2,600 nodule clusters.</li>
 <li>Distribution of <code>n_readers</code> (how many nodules have 1, 2,
 3, 4 readers).</li>
 <li>No missing <code>malignancy</code>; ratings all within their
@@ -552,7 +546,33 @@ counts for the report's Data section.</p>
 <h2
 id="step-3--cleaning-and-building-the-nodule-level-table-week-2">Step 3
 — Cleaning and building the nodule-level table (Week 2)</h2>
-<p>Script: <code>R/01_clean.R</code>.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> R/01_clean.R</span></code></pre></div>
+<p>Base R only. Writes to <code>data/processed/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nodules.csv</code></td>
+<td>Master nodule table: every column below plus
+<code>calcification</code>, <code>internalStructure</code> and
+<code>split</code></td>
+</tr>
+<tr>
+<td><code>nodules_train.csv</code>, <code>nodules_test.csv</code></td>
+<td>Modelling tables (no nominal ratings, no <code>split</code>)</td>
+</tr>
+<tr>
+<td><code>median_ties.csv</code></td>
+<td>Nodules whose median malignancy fell between two grades</td>
+</tr>
+</tbody>
+</table>
 <h3 id="31-decide-which-features-are-predictors">3.1 Decide which
 features are predictors</h3>
 <p>The semantic ratings (spiculation, margin, …) come from the
@@ -564,41 +584,61 @@ only.</li>
 <li><strong>Secondary model:</strong> geometric + semantic features
 (reported as a comparison, with the circularity caveat).</li>
 </ul>
-<h3 id="32-aggregate-to-one-row-per-nodule">3.2 Aggregate to one row per
+<p><code>calcification</code> and <code>internalStructure</code> are
+<strong>nominal</strong> (category labels, not rankings), and almost
+every nodule has the same value (no calcification, soft tissue). They
+are <strong>dropped from modelling</strong>; their per-nodule mode is
+kept in <code>nodules.csv</code> for reference.</p>
+<h3 id="32-clusters-with-more-than-4-annotations">3.2 Clusters with more
+than 4 annotations</h3>
+<p>LIDC had four readers per scan, so a cluster of 5+ annotations means
+<code>cluster_annotations()</code> merged neighbouring lesions. These
+clusters are dropped; report how many.</p>
+<h3 id="33-aggregate-to-one-row-per-nodule">3.3 Aggregate to one row per
 nodule</h3>
 <p>For each <code>nodule_id</code>:</p>
 <ul>
 <li>geometric features: <strong>mean</strong> across readers (each
 reader drew a slightly different contour);</li>
-<li>semantic features: <strong>median</strong> across readers;</li>
+<li>ordinal semantic features: <strong>median</strong> across readers
+(half-grades such as 2.5 are kept, since these are numeric
+predictors);</li>
 <li>malignancy: keep <strong>all</strong> reader ratings in wide form
 <code>R1..R4</code> (with <code>NA</code> for missing readers) for the
-EM model, plus <code>mal_median</code> (rounded median) for the naive
-models.</li>
+EM model, plus <code>mal_median</code> for the naive models.</li>
 </ul>
-<p>Also store the count matrix <code>C</code> (n × 5):
-<code>C[i, r]</code> = number of readers who gave nodule <em>i</em>
-rating <em>r</em>. The EM code uses this.</p>
-<h3 id="33-transformations">3.3 Transformations</h3>
+<p>Also store the count matrix <code>C</code> (n × 5) as columns
+<code>C1..C5</code>: <code>C[i, r]</code> = number of readers who gave
+nodule <em>i</em> rating <em>r</em>. The EM code uses this.</p>
+<p><strong>Median ties.</strong> With an even number of readers (2 or 4)
+the median falls between two grades whenever the two middle ratings
+differ, e.g. (3, 4) → 3.5 or (2, 3, 4, 4) → 3.5. <code>mal_median</code>
+rounds these <strong>up</strong> (conservative for triage),
+<code>mal_median_raw</code> keeps the unrounded value and
+<code>mal_median_tie</code> flags them. State the rule in the report.
+The EM model does not need this rule, since it uses all ratings.</p>
+<h3 id="34-transformations">3.4 Transformations</h3>
 <ul>
 <li><code>volume</code>, <code>surface_area</code>,
-<code>convex_volume</code> are heavily right-skewed: use
-<code>log()</code>.</li>
-<li>Derived features: <code>solidity = volume / convex_volume</code>,
-<code>compactness = volume^(2/3) / surface_area</code> (or a standard
-sphericity index).</li>
-<li>Standardise all continuous predictors (mean 0, sd 1) so coefficients
-and Lasso penalties are comparable. Save the means/SDs from the
-<strong>training</strong> set.</li>
+<code>convex_volume</code> are heavily right-skewed:
+<code>log_volume</code>, <code>log_surface_area</code>,
+<code>log_convex_volume</code> are added.</li>
+<li>Derived: <code>compactness = volume^(2/3) / surface_area</code>.
+(<code>solidity</code> already comes from extraction.)</li>
+<li>The CSVs store <strong>unstandardised</strong> values. Standardise
+(mean 0, sd 1) inside each modelling script using the
+<strong>training-set</strong> means/SDs, so test-set information never
+leaks into the saved files.</li>
 </ul>
-<h3 id="34-traintest-split-by-patient">3.4 Train/test split by
+<h3 id="35-traintest-split-by-patient">3.5 Train/test split by
 patient</h3>
-<p>Split at the <strong>patient</strong> level (70/30), not the nodule
-level, so nodules from one patient never appear in both sets. Set a seed
-and save the split to <code>data/processed/split.csv</code>.</p>
+<p>Split at the <strong>patient</strong> level (70/30, seed
+<code>20261105</code>), not the nodule level, so nodules from one
+patient never appear in both sets. The assignment is the
+<code>split</code> column of <code>nodules.csv</code>.</p>
 <p><strong>All screening and selection (Steps 4–5) uses the training set
-only.</strong> The test set is touched once, in Step 9.</p>
-<h3 id="35-exploratory-analysis">3.5 Exploratory analysis</h3>
+only.</strong> The test set is touched once, in Step 10.</p>
+<h3 id="36-exploratory-analysis">3.6 Exploratory analysis</h3>
 <ul>
 <li>Bar chart of <code>mal_median</code>; bar chart of all individual
 ratings.</li>
@@ -733,7 +773,7 @@ class="math display">\[\ell(\theta) = \sum_i \log \sum_{k=1}^5
 p_{ik}(\alpha,\beta) \prod_{r=1}^5 \pi_{kr}^{C_{ir}}\]</span> where
 <span class="math inline">\(p_{ik} = P(Z_i = k \mid x_i)\)</span> and
 <span class="math inline">\(C_{ir}\)</span> is the count matrix from
-Step 3.2.</li>
+Step 3.3.</li>
 </ul>
 <h3
 id="72-write-the-derivation-first-on-paper-then-into-the-appendix">7.2

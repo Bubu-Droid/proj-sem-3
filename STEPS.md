@@ -42,31 +42,25 @@ proj-sem-3/
 
 ### 0.2 Python environment
 
-`pylidc` is old and breaks with newer libraries. Use an isolated environment with an older Python:
+The environment is managed with **uv** and is already set up in `pyproject.toml` / `uv.lock`. `pylidc` 0.2.3 is old: it needs `pkg_resources` and the pre-2.0 NumPy/SQLAlchemy APIs, so Python is pinned to 3.11 with `numpy<1.24`, `sqlalchemy<2.0`, `setuptools<80` (and matching pandas/scipy/scikit-image).
 
 ```bash
-uv venv --python 3.11 .venv      # or: python3.11 -m venv .venv
-source .venv/bin/activate
-pip install pylidc pandas scikit-image scipy
-python -c "import pylidc as pl; print(pl.query(pl.Scan).count())"
+uv sync
+uv run python -c "import pylidc as pl; print(pl.query(pl.Scan).count(), pl.query(pl.Annotation).count())"
 ```
 
-If the import fails with errors mentioning `np.int`/`np.float` or SQLAlchemy, pin older versions:
-
-```bash
-pip install "numpy<1.24" "sqlalchemy<2.0"
-```
-
-The last command should print **1018** (the number of CT scans). The annotation database ships inside the package, so no DICOM download is needed for anything in this project.
+This prints **1018 6859** (CT scans, annotations). The annotation database ships inside the package, so no DICOM download is needed for anything in this project.
 
 ### 0.3 R environment
 
+Step 3 (`R/01_clean.R`) needs only base R. Install the rest before Step 4:
+
 ```r
-install.packages(c("MASS", "ordinal", "brant", "ordinalNet", "car",
-                   "dplyr", "tidyr", "ggplot2", "corrplot", "xtable"))
+install.packages(c("ordinal", "brant", "ordinalNet", "car",
+                   "ggplot2", "corrplot", "xtable"))
 ```
 
-☐ `pylidc` returns 1018 scans; all R packages load.
+☐ `pylidc` returns 1018 scans and 6859 annotations; all R packages load.
 
 ---
 
@@ -104,68 +98,25 @@ Hierarchy: patient → scan(s) → nodule(s) → 1–4 reader annotations.
 
 ### 2.2 Extraction script (`python/extract.py`)
 
-Write one row per **annotation**, carrying patient, scan and nodule IDs so you can aggregate later.
-
-```python
-import numpy as np
-import pandas as pd
-import pylidc as pl
-from scipy.spatial import ConvexHull
-
-RATINGS = ["subtlety", "internalStructure", "calcification", "sphericity",
-           "margin", "lobulation", "spiculation", "texture", "malignancy"]
-
-def shape_features(ann, scan):
-    """Extra geometric features from the binary mask (no DICOM needed)."""
-    mask = ann.boolean_mask()
-    sp = np.array([scan.pixel_spacing, scan.pixel_spacing, scan.slice_spacing])
-    pts = np.argwhere(mask) * sp                     # voxel coordinates in mm
-    out = {"n_voxels": int(mask.sum()),
-           "n_slices": int(mask.shape[2]),
-           "bbox_x": mask.shape[0] * sp[0],
-           "bbox_y": mask.shape[1] * sp[1],
-           "bbox_z": mask.shape[2] * sp[2]}
-    if len(pts) >= 4:
-        ev = np.sort(np.linalg.eigvalsh(np.cov(pts.T)))[::-1]
-        out["elongation"] = np.sqrt(ev[1] / ev[0]) if ev[0] > 0 else np.nan
-        out["flatness"]   = np.sqrt(ev[2] / ev[0]) if ev[0] > 0 else np.nan
-        try:
-            hull = ConvexHull(pts)
-            out["convex_volume"] = hull.volume
-        except Exception:
-            out["convex_volume"] = np.nan
-    return out
-
-rows = []
-for scan in pl.query(pl.Scan).all():
-    try:
-        clusters = scan.cluster_annotations(verbose=False)
-    except Exception as e:
-        print(f"skip {scan.patient_id}: {e}")
-        continue
-    for nod_idx, anns in enumerate(clusters):
-        for reader_idx, ann in enumerate(anns):
-            row = {"patient_id": scan.patient_id,
-                   "scan_id": scan.id,
-                   "nodule_id": f"{scan.id}_{nod_idx}",
-                   "ann_id": ann.id,
-                   "reader_slot": reader_idx,       # NOT a stable reader identity
-                   "n_readers": len(anns),
-                   "diameter": ann.diameter,
-                   "surface_area": ann.surface_area,
-                   "volume": ann.volume}
-            row.update({r: getattr(ann, r) for r in RATINGS})
-            row.update(shape_features(ann, scan))
-            rows.append(row)
-
-pd.DataFrame(rows).to_csv("data/raw/annotations.csv", index=False)
+```bash
+uv run python python/extract.py
 ```
 
-Run it once (it takes a while: mask building is the slow part) and never edit the output by hand.
+Writes `data/raw/annotations.csv`, the **master file**, with one row per **annotation**. It carries patient, scan and nodule IDs so you can aggregate later. Run it once (it is slow: pylidc's surface-area and volume computations dominate) and never edit the output by hand.
+
+| Group | Columns |
+|---|---|
+| IDs | `patient_id`, `scan_id`, `nodule_id` (`<scan_id>_<cluster>`), `ann_id`, `reader_slot` (**not** a stable reader identity), `n_readers` |
+| Scan geometry | `pixel_spacing`, `slice_thickness`, `slice_spacing` |
+| pylidc geometry | `diameter` (mm), `surface_area` (mm²), `volume` (mm³) |
+| Mask shape | `n_voxels`, `n_slices`, `bbox_x/y/z` (mm), `elongation`, `flatness` (principal-axis ratios, (0, 1]), `convex_volume` (mm³, convex hull counted in voxels), `solidity` (`n_voxels` / hull voxels, (0, 1]) |
+| Ratings | `subtlety`, `internalStructure`, `calcification`, `sphericity`, `margin`, `lobulation`, `spiculation`, `texture`, **`malignancy`** |
+
+Nodules drawn on a single slice are flat in 3D, so their convex hull is taken in 2D.
 
 ### 2.3 Sanity checks
 
-- Number of annotations, nodules, scans, patients. Expect roughly 6,800 annotations and roughly 2,600 nodule clusters; check against the pylidc docs/paper.
+- Number of annotations, nodules, scans, patients. Expect 6,859 annotations and roughly 2,600 nodule clusters.
 - Distribution of `n_readers` (how many nodules have 1, 2, 3, 4 readers).
 - No missing `malignancy`; ratings all within their documented ranges.
 - Some patients have more than one scan. Note this for the train/test split.
@@ -185,7 +136,17 @@ That is enough for BH screening to be meaningful but not "dozens of texture feat
 
 ## Step 3 — Cleaning and building the nodule-level table (Week 2)
 
-Script: `R/01_clean.R`.
+```bash
+Rscript R/01_clean.R
+```
+
+Base R only. Writes to `data/processed/`:
+
+| File | Contents |
+|---|---|
+| `nodules.csv` | Master nodule table: every column below plus `calcification`, `internalStructure` and `split` |
+| `nodules_train.csv`, `nodules_test.csv` | Modelling tables (no nominal ratings, no `split`) |
+| `median_ties.csv` | Nodules whose median malignancy fell between two grades |
 
 ### 3.1 Decide which features are predictors
 
@@ -194,29 +155,37 @@ The semantic ratings (spiculation, margin, …) come from the **same radiologist
 - **Primary model:** contour-derived geometric features only.
 - **Secondary model:** geometric + semantic features (reported as a comparison, with the circularity caveat).
 
-### 3.2 Aggregate to one row per nodule
+`calcification` and `internalStructure` are **nominal** (category labels, not rankings), and almost every nodule has the same value (no calcification, soft tissue). They are **dropped from modelling**; their per-nodule mode is kept in `nodules.csv` for reference.
+
+### 3.2 Clusters with more than 4 annotations
+
+LIDC had four readers per scan, so a cluster of 5+ annotations means `cluster_annotations()` merged neighbouring lesions. These clusters are dropped; report how many.
+
+### 3.3 Aggregate to one row per nodule
 
 For each `nodule_id`:
 
 - geometric features: **mean** across readers (each reader drew a slightly different contour);
-- semantic features: **median** across readers;
-- malignancy: keep **all** reader ratings in wide form `R1..R4` (with `NA` for missing readers) for the EM model, plus `mal_median` (rounded median) for the naive models.
+- ordinal semantic features: **median** across readers (half-grades such as 2.5 are kept, since these are numeric predictors);
+- malignancy: keep **all** reader ratings in wide form `R1..R4` (with `NA` for missing readers) for the EM model, plus `mal_median` for the naive models.
 
-Also store the count matrix `C` (n × 5): `C[i, r]` = number of readers who gave nodule *i* rating *r*. The EM code uses this.
+Also store the count matrix `C` (n × 5) as columns `C1..C5`: `C[i, r]` = number of readers who gave nodule *i* rating *r*. The EM code uses this.
 
-### 3.3 Transformations
+**Median ties.** With an even number of readers (2 or 4) the median falls between two grades whenever the two middle ratings differ, e.g. (3, 4) → 3.5 or (2, 3, 4, 4) → 3.5. `mal_median` rounds these **up** (conservative for triage), `mal_median_raw` keeps the unrounded value and `mal_median_tie` flags them. State the rule in the report. The EM model does not need this rule, since it uses all ratings.
 
-- `volume`, `surface_area`, `convex_volume` are heavily right-skewed: use `log()`.
-- Derived features: `solidity = volume / convex_volume`, `compactness = volume^(2/3) / surface_area` (or a standard sphericity index).
-- Standardise all continuous predictors (mean 0, sd 1) so coefficients and Lasso penalties are comparable. Save the means/SDs from the **training** set.
+### 3.4 Transformations
 
-### 3.4 Train/test split by patient
+- `volume`, `surface_area`, `convex_volume` are heavily right-skewed: `log_volume`, `log_surface_area`, `log_convex_volume` are added.
+- Derived: `compactness = volume^(2/3) / surface_area`. (`solidity` already comes from extraction.)
+- The CSVs store **unstandardised** values. Standardise (mean 0, sd 1) inside each modelling script using the **training-set** means/SDs, so test-set information never leaks into the saved files.
 
-Split at the **patient** level (70/30), not the nodule level, so nodules from one patient never appear in both sets. Set a seed and save the split to `data/processed/split.csv`.
+### 3.5 Train/test split by patient
 
-**All screening and selection (Steps 4–5) uses the training set only.** The test set is touched once, in Step 9.
+Split at the **patient** level (70/30, seed `20261105`), not the nodule level, so nodules from one patient never appear in both sets. The assignment is the `split` column of `nodules.csv`.
 
-### 3.5 Exploratory analysis
+**All screening and selection (Steps 4–5) uses the training set only.** The test set is touched once, in Step 10.
+
+### 3.6 Exploratory analysis
 
 - Bar chart of `mal_median`; bar chart of all individual ratings.
 - Boxplots of each geometric feature by `mal_median`.
@@ -331,7 +300,7 @@ Script: `R/05_em.R`. This is the core of the extension (Phase 4 of `PLAN.md`).
 - Ratings conditionally independent given $Z_i$.
 - Observed-data log-likelihood:
   $$\ell(\theta) = \sum_i \log \sum_{k=1}^5 p_{ik}(\alpha,\beta) \prod_{r=1}^5 \pi_{kr}^{C_{ir}}$$
-  where $p_{ik} = P(Z_i = k \mid x_i)$ and $C_{ir}$ is the count matrix from Step 3.2.
+  where $p_{ik} = P(Z_i = k \mid x_i)$ and $C_{ir}$ is the count matrix from Step 3.3.
 
 ### 7.2 Write the derivation first (on paper, then into the appendix)
 
