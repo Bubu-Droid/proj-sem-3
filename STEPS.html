@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.11" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Project Walkthrough</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js"
+  type="text/javascript"></script>
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a
+href="#project-walkthrough-ordinal-modelling-of-lidc-idri-nodule-malignancy"
+id="toc-project-walkthrough-ordinal-modelling-of-lidc-idri-nodule-malignancy">Project
+Walkthrough: Ordinal Modelling of LIDC-IDRI Nodule Malignancy</a>
+<ul>
+<li><a href="#step-0--set-up-the-project-day-1"
+id="toc-step-0--set-up-the-project-day-1">Step 0 — Set up the project
+(Day 1)</a></li>
+<li><a href="#step-1--background-reading-week-1-in-parallel-with-step-2"
+id="toc-step-1--background-reading-week-1-in-parallel-with-step-2">Step
+1 — Background reading (Week 1, in parallel with Step 2)</a></li>
+<li><a href="#step-2--data-extraction-with-pylidc-week-1"
+id="toc-step-2--data-extraction-with-pylidc-week-1">Step 2 — Data
+extraction with pylidc (Week 1)</a></li>
+<li><a
+href="#step-3--cleaning-and-building-the-nodule-level-table-week-2"
+id="toc-step-3--cleaning-and-building-the-nodule-level-table-week-2">Step
+3 — Cleaning and building the nodule-level table (Week 2)</a></li>
+<li><a href="#step-4--feature-screening-with-benjaminihochberg-week-2"
+id="toc-step-4--feature-screening-with-benjaminihochberg-week-2">Step 4
+— Feature screening with Benjamini–Hochberg (Week 2)</a></li>
+<li><a href="#step-5--variable-selection-and-final-design-matrix-week-3"
+id="toc-step-5--variable-selection-and-final-design-matrix-week-3">Step
+5 — Variable selection and final design matrix (Week 3)</a></li>
+<li><a href="#step-6--naive-proportional-odds-model-week-3"
+id="toc-step-6--naive-proportional-odds-model-week-3">Step 6 — Naive
+proportional odds model (Week 3)</a></li>
+<li><a href="#step-7--em-latent-true-grade-model-weeks-45"
+id="toc-step-7--em-latent-true-grade-model-weeks-45">Step 7 — EM latent
+true-grade model (Weeks 4–5)</a></li>
+<li><a href="#step-8--simulation-study-week-5"
+id="toc-step-8--simulation-study-week-5">Step 8 — Simulation study (Week
+5)</a></li>
+<li><a href="#step-9--diagnostics-and-hypothesis-tests-week-6"
+id="toc-step-9--diagnostics-and-hypothesis-tests-week-6">Step 9 —
+Diagnostics and hypothesis tests (Week 6)</a></li>
+<li><a href="#step-10--evaluation-on-the-test-set-week-6"
+id="toc-step-10--evaluation-on-the-test-set-week-6">Step 10 — Evaluation
+on the test set (Week 6)</a></li>
+<li><a href="#step-11--policy-interpretation-week-7"
+id="toc-step-11--policy-interpretation-week-7">Step 11 — Policy
+interpretation (Week 7)</a></li>
+<li><a href="#step-12--write-the-report-weeks-78"
+id="toc-step-12--write-the-report-weeks-78">Step 12 — Write the report
+(Weeks 7–8)</a></li>
+<li><a href="#step-13--slides-and-defense-week-8"
+id="toc-step-13--slides-and-defense-week-8">Step 13 — Slides and defense
+(Week 8)</a></li>
+<li><a
+href="#suggested-timeline-8-weeks-compress-if-your-deadline-is-sooner"
+id="toc-suggested-timeline-8-weeks-compress-if-your-deadline-is-sooner">Suggested
+timeline (8 weeks; compress if your deadline is sooner)</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1
+id="project-walkthrough-ordinal-modelling-of-lidc-idri-nodule-malignancy">Project
+Walkthrough: Ordinal Modelling of LIDC-IDRI Nodule Malignancy</h1>
+<p>A step-by-step guide from an empty folder to the final defense. Read
+alongside <code>PLAN.md</code>, which states <em>what</em> the project
+is. This file says <em>how</em> to do it and in what order.</p>
+<p>Conventions used below:</p>
+<ul>
+<li><strong>Python</strong> is used only for data extraction
+(<code>pylidc</code> is Python-only).</li>
+<li><strong>R</strong> is used for all statistics
+(<code>MASS::polr</code>, <code>ordinal</code>, <code>brant</code>,
+<code>ordinalNet</code> are mature and accept case weights, which the EM
+M-step needs).</li>
+<li><code>☐</code> marks a concrete deliverable that should exist before
+you move on.</li>
+</ul>
+<hr />
+<h2 id="step-0--set-up-the-project-day-1">Step 0 — Set up the project
+(Day 1)</h2>
+<h3 id="01-folder-layout">0.1 Folder layout</h3>
+<pre class="text"><code>proj-sem-3/
+├── PLAN.md
+├── STEPS.md
+├── data/
+│   ├── raw/            # CSVs straight out of pylidc (never edited by hand)
+│   └── processed/      # nodule-level analysis tables
+├── python/
+│   └── extract.py
+├── R/
+│   ├── 01_clean.R
+│   ├── 02_screen.R
+│   ├── 03_select.R
+│   ├── 04_polr.R
+│   ├── 05_em.R
+│   ├── 06_tests.R
+│   ├── 07_simulation.R
+│   └── 08_figures.R
+├── figures/
+├── report/
+│   ├── report.tex
+│   └── refs.bib
+└── slides/
+    └── slides.tex</code></pre>
+<h3 id="02-python-environment">0.2 Python environment</h3>
+<p><code>pylidc</code> is old and breaks with newer libraries. Use an
+isolated environment with an older Python:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> venv <span class="at">--python</span> 3.11 .venv      <span class="co"># or: python3.11 -m venv .venv</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> .venv/bin/activate</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pylidc pandas scikit-image scipy</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-c</span> <span class="st">&quot;import pylidc as pl; print(pl.query(pl.Scan).count())&quot;</span></span></code></pre></div>
+<p>If the import fails with errors mentioning
+<code>np.int</code>/<code>np.float</code> or SQLAlchemy, pin older
+versions:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="st">&quot;numpy&lt;1.24&quot;</span> <span class="st">&quot;sqlalchemy&lt;2.0&quot;</span></span></code></pre></div>
+<p>The last command should print <strong>1018</strong> (the number of CT
+scans). The annotation database ships inside the package, so no DICOM
+download is needed for anything in this project.</p>
+<h3 id="03-r-environment">0.3 R environment</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">&quot;MASS&quot;</span>, <span class="st">&quot;ordinal&quot;</span>, <span class="st">&quot;brant&quot;</span>, <span class="st">&quot;ordinalNet&quot;</span>, <span class="st">&quot;car&quot;</span>,</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;tidyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>, <span class="st">&quot;corrplot&quot;</span>, <span class="st">&quot;xtable&quot;</span>))</span></code></pre></div>
+<p>☐ <code>pylidc</code> returns 1018 scans; all R packages load.</p>
+<hr />
+<h2 id="step-1--background-reading-week-1-in-parallel-with-step-2">Step
+1 — Background reading (Week 1, in parallel with Step 2)</h2>
+<p>Do this before writing any modelling code. Each item maps to a part
+of the report.</p>
+<table>
+<thead>
+<tr>
+<th>Topic</th>
+<th>What you must be able to do</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Proportional odds model</td>
+<td>Write the cumulative logit model, explain it as a latent <span
+class="math inline">\(Y^* = x^\top\beta + \varepsilon\)</span> with
+logistic <span class="math inline">\(\varepsilon\)</span> and thresholds
+<span class="math inline">\(\alpha_k\)</span>, interpret <span
+class="math inline">\(e^{\beta}\)</span> as an odds ratio</td>
+<td>Agresti, <em>Categorical Data Analysis</em>, ch. on ordinal models
+(Topic 2 notes)</td>
+</tr>
+<tr>
+<td>Benjamini–Hochberg</td>
+<td>State the procedure, know it controls FDR under independence /
+positive dependence (PRDS), know Benjamini–Yekutieli for arbitrary
+dependence</td>
+<td>Topic 11 notes; Benjamini &amp; Hochberg (1995)</td>
+</tr>
+<tr>
+<td>AIC/BIC, Lasso</td>
+<td>Know when each is appropriate and why post-selection p-values are
+optimistic</td>
+<td>Topic 9 notes; ESL ch. 3</td>
+</tr>
+<tr>
+<td>Brant test</td>
+<td>It is a <strong>Wald</strong> test comparing separate binary-logit
+fits at each threshold; know the alternative LR test of partial
+proportional odds (<code>ordinal::nominal_test</code>)</td>
+<td>Brant (1990), <em>Biometrics</em> 46(4)</td>
+</tr>
+<tr>
+<td>Wilks' theorem / LRT</td>
+<td><span class="math inline">\(-2\log\Lambda \to \chi^2_{df}\)</span>
+under <span class="math inline">\(H_0\)</span>; regularity conditions;
+nested models only</td>
+<td>Casella &amp; Berger, ch. 10</td>
+</tr>
+<tr>
+<td>EM algorithm</td>
+<td>Derive the Q-function, prove monotonicity via Jensen/KL, know
+local-maximum and slow-convergence issues</td>
+<td>McLachlan &amp; Krishnan ch. 1–4; Wasserman, <em>All of
+Statistics</em></td>
+</tr>
+<tr>
+<td>Dawid–Skene</td>
+<td>Latent true class + confusion matrices; E- and M-step updates; label
+switching</td>
+<td>Dawid &amp; Skene (1979), JRSS-C 28(1) 20–28, doi:10.2307/2346806;
+arXiv:1812.02736</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Warm-up exercise (strongly recommended):</strong> derive and
+code EM for a 2-component Gaussian mixture on simulated data. It has the
+same E-step/M-step structure as Dawid–Skene and takes an evening.</p>
+<p>☐ One page of handwritten notes per row of the table;
+Gaussian-mixture EM working.</p>
+<hr />
+<h2 id="step-2--data-extraction-with-pylidc-week-1">Step 2 — Data
+extraction with pylidc (Week 1)</h2>
+<h3 id="21-understand-the-data-structure">2.1 Understand the data
+structure</h3>
+<ul>
+<li><strong>Scan</strong>: one CT study. Has <code>patient_id</code>,
+<code>pixel_spacing</code>, <code>slice_thickness</code>,
+<code>slice_spacing</code>.</li>
+<li><strong>Annotation</strong>: one radiologist's outline of one nodule
+(≥ 3 mm) in one scan. Has:
+<ul>
+<li>geometric: <code>diameter</code>, <code>surface_area</code>,
+<code>volume</code> (computed from the contours, no images needed);</li>
+<li>semantic ratings (1–5 or 1–6): <code>subtlety</code>,
+<code>internalStructure</code>, <code>calcification</code>,
+<code>sphericity</code>, <code>margin</code>, <code>lobulation</code>,
+<code>spiculation</code>, <code>texture</code>,
+<strong><code>malignancy</code></strong>.</li>
+</ul></li>
+<li><strong>Nodule</strong> (not a table):
+<code>scan.cluster_annotations()</code> groups annotations that refer to
+the same physical nodule. Each cluster has 1–4 annotations. <strong>The
+nodule is your unit of analysis.</strong></li>
+</ul>
+<p>Hierarchy: patient → scan(s) → nodule(s) → 1–4 reader
+annotations.</p>
+<h3 id="22-extraction-script-pythonextractpy">2.2 Extraction script
+(<code>python/extract.py</code>)</h3>
+<p>Write one row per <strong>annotation</strong>, carrying patient, scan
+and nodule IDs so you can aggregate later.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pylidc <span class="im">as</span> pl</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.spatial <span class="im">import</span> ConvexHull</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>RATINGS <span class="op">=</span> [<span class="st">&quot;subtlety&quot;</span>, <span class="st">&quot;internalStructure&quot;</span>, <span class="st">&quot;calcification&quot;</span>, <span class="st">&quot;sphericity&quot;</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;margin&quot;</span>, <span class="st">&quot;lobulation&quot;</span>, <span class="st">&quot;spiculation&quot;</span>, <span class="st">&quot;texture&quot;</span>, <span class="st">&quot;malignancy&quot;</span>]</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> shape_features(ann, scan):</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Extra geometric features from the binary mask (no DICOM needed).&quot;&quot;&quot;</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    mask <span class="op">=</span> ann.boolean_mask()</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    sp <span class="op">=</span> np.array([scan.pixel_spacing, scan.pixel_spacing, scan.slice_spacing])</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    pts <span class="op">=</span> np.argwhere(mask) <span class="op">*</span> sp                     <span class="co"># voxel coordinates in mm</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> {<span class="st">&quot;n_voxels&quot;</span>: <span class="bu">int</span>(mask.<span class="bu">sum</span>()),</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;n_slices&quot;</span>: <span class="bu">int</span>(mask.shape[<span class="dv">2</span>]),</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;bbox_x&quot;</span>: mask.shape[<span class="dv">0</span>] <span class="op">*</span> sp[<span class="dv">0</span>],</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;bbox_y&quot;</span>: mask.shape[<span class="dv">1</span>] <span class="op">*</span> sp[<span class="dv">1</span>],</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;bbox_z&quot;</span>: mask.shape[<span class="dv">2</span>] <span class="op">*</span> sp[<span class="dv">2</span>]}</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(pts) <span class="op">&gt;=</span> <span class="dv">4</span>:</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        ev <span class="op">=</span> np.sort(np.linalg.eigvalsh(np.cov(pts.T)))[::<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        out[<span class="st">&quot;elongation&quot;</span>] <span class="op">=</span> np.sqrt(ev[<span class="dv">1</span>] <span class="op">/</span> ev[<span class="dv">0</span>]) <span class="cf">if</span> ev[<span class="dv">0</span>] <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        out[<span class="st">&quot;flatness&quot;</span>]   <span class="op">=</span> np.sqrt(ev[<span class="dv">2</span>] <span class="op">/</span> ev[<span class="dv">0</span>]) <span class="cf">if</span> ev[<span class="dv">0</span>] <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>            hull <span class="op">=</span> ConvexHull(pts)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>            out[<span class="st">&quot;convex_volume&quot;</span>] <span class="op">=</span> hull.volume</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> <span class="pp">Exception</span>:</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>            out[<span class="st">&quot;convex_volume&quot;</span>] <span class="op">=</span> np.nan</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> scan <span class="kw">in</span> pl.query(pl.Scan).<span class="bu">all</span>():</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>        clusters <span class="op">=</span> scan.cluster_annotations(verbose<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;skip </span><span class="sc">{</span>scan<span class="sc">.</span>patient_id<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> nod_idx, anns <span class="kw">in</span> <span class="bu">enumerate</span>(clusters):</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> reader_idx, ann <span class="kw">in</span> <span class="bu">enumerate</span>(anns):</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>            row <span class="op">=</span> {<span class="st">&quot;patient_id&quot;</span>: scan.patient_id,</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;scan_id&quot;</span>: scan.<span class="bu">id</span>,</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;nodule_id&quot;</span>: <span class="ss">f&quot;</span><span class="sc">{</span>scan<span class="sc">.</span><span class="bu">id</span><span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>nod_idx<span class="sc">}</span><span class="ss">&quot;</span>,</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;ann_id&quot;</span>: ann.<span class="bu">id</span>,</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;reader_slot&quot;</span>: reader_idx,       <span class="co"># NOT a stable reader identity</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;n_readers&quot;</span>: <span class="bu">len</span>(anns),</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;diameter&quot;</span>: ann.diameter,</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;surface_area&quot;</span>: ann.surface_area,</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;volume&quot;</span>: ann.volume}</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>            row.update({r: <span class="bu">getattr</span>(ann, r) <span class="cf">for</span> r <span class="kw">in</span> RATINGS})</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>            row.update(shape_features(ann, scan))</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>            rows.append(row)</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(rows).to_csv(<span class="st">&quot;data/raw/annotations.csv&quot;</span>, index<span class="op">=</span><span class="va">False</span>)</span></code></pre></div>
+<p>Run it once (it takes a while: mask building is the slow part) and
+never edit the output by hand.</p>
+<h3 id="23-sanity-checks">2.3 Sanity checks</h3>
+<ul>
+<li>Number of annotations, nodules, scans, patients. Expect roughly
+6,800 annotations and roughly 2,600 nodule clusters; check against the
+pylidc docs/paper.</li>
+<li>Distribution of <code>n_readers</code> (how many nodules have 1, 2,
+3, 4 readers).</li>
+<li>No missing <code>malignancy</code>; ratings all within their
+documented ranges.</li>
+<li>Some patients have more than one scan. Note this for the train/test
+split.</li>
+</ul>
+<h3 id="24-important-limitation-to-acknowledge-now">2.4 Important
+limitation to acknowledge now</h3>
+<p>Without the DICOM images you <strong>cannot</strong> compute
+intensity-based radiomic texture features (GLCM, GLRLM, etc.). Your
+feature pool is:</p>
+<ol type="1">
+<li>contour-derived geometry (≈ 10–15 features from 2.2), and</li>
+<li>the radiologists' semantic ratings (8 features).</li>
+</ol>
+<p>That is enough for BH screening to be meaningful but not "dozens of
+texture features". State this honestly in the report. (Optional
+extension: download the DICOMs for a subset and run
+<code>pyradiomics</code>. Skip unless you have spare time.)</p>
+<p>☐ <code>data/raw/annotations.csv</code> exists; a short table of
+counts for the report's Data section.</p>
+<hr />
+<h2
+id="step-3--cleaning-and-building-the-nodule-level-table-week-2">Step 3
+— Cleaning and building the nodule-level table (Week 2)</h2>
+<p>Script: <code>R/01_clean.R</code>.</p>
+<h3 id="31-decide-which-features-are-predictors">3.1 Decide which
+features are predictors</h3>
+<p>The semantic ratings (spiculation, margin, …) come from the
+<strong>same radiologists</strong> who rate malignancy, so using them as
+predictors is partly circular. Recommended design:</p>
+<ul>
+<li><strong>Primary model:</strong> contour-derived geometric features
+only.</li>
+<li><strong>Secondary model:</strong> geometric + semantic features
+(reported as a comparison, with the circularity caveat).</li>
+</ul>
+<h3 id="32-aggregate-to-one-row-per-nodule">3.2 Aggregate to one row per
+nodule</h3>
+<p>For each <code>nodule_id</code>:</p>
+<ul>
+<li>geometric features: <strong>mean</strong> across readers (each
+reader drew a slightly different contour);</li>
+<li>semantic features: <strong>median</strong> across readers;</li>
+<li>malignancy: keep <strong>all</strong> reader ratings in wide form
+<code>R1..R4</code> (with <code>NA</code> for missing readers) for the
+EM model, plus <code>mal_median</code> (rounded median) for the naive
+models.</li>
+</ul>
+<p>Also store the count matrix <code>C</code> (n × 5):
+<code>C[i, r]</code> = number of readers who gave nodule <em>i</em>
+rating <em>r</em>. The EM code uses this.</p>
+<h3 id="33-transformations">3.3 Transformations</h3>
+<ul>
+<li><code>volume</code>, <code>surface_area</code>,
+<code>convex_volume</code> are heavily right-skewed: use
+<code>log()</code>.</li>
+<li>Derived features: <code>solidity = volume / convex_volume</code>,
+<code>compactness = volume^(2/3) / surface_area</code> (or a standard
+sphericity index).</li>
+<li>Standardise all continuous predictors (mean 0, sd 1) so coefficients
+and Lasso penalties are comparable. Save the means/SDs from the
+<strong>training</strong> set.</li>
+</ul>
+<h3 id="34-traintest-split-by-patient">3.4 Train/test split by
+patient</h3>
+<p>Split at the <strong>patient</strong> level (70/30), not the nodule
+level, so nodules from one patient never appear in both sets. Set a seed
+and save the split to <code>data/processed/split.csv</code>.</p>
+<p><strong>All screening and selection (Steps 4–5) uses the training set
+only.</strong> The test set is touched once, in Step 9.</p>
+<h3 id="35-exploratory-analysis">3.5 Exploratory analysis</h3>
+<ul>
+<li>Bar chart of <code>mal_median</code>; bar chart of all individual
+ratings.</li>
+<li>Boxplots of each geometric feature by <code>mal_median</code>.</li>
+<li>Correlation heatmap of predictors (expect diameter, log-volume,
+log-surface-area to be ≈ 0.9+ correlated).</li>
+<li><strong>Inter-reader agreement:</strong> proportion of nodules where
+readers disagree; Fleiss' κ or the distribution of (max − min) rating
+per nodule. This motivates the EM model.</li>
+</ul>
+<p>☐ <code>data/processed/nodules_train.csv</code>,
+<code>nodules_test.csv</code>; 3–4 EDA figures in
+<code>figures/</code>.</p>
+<hr />
+<h2 id="step-4--feature-screening-with-benjaminihochberg-week-2">Step 4
+— Feature screening with Benjamini–Hochberg (Week 2)</h2>
+<p>Script: <code>R/02_screen.R</code>. Topic 11.</p>
+<ol type="1">
+<li>For each candidate feature <span class="math inline">\(X_j\)</span>,
+test <span class="math inline">\(H_{0j}\)</span>: no association with
+malignancy. Use a <strong>univariate proportional odds LRT</strong>: fit
+<code>polr(mal_median ~ X_j)</code> vs the intercept-only model, <span
+class="math inline">\(-2\log\Lambda \sim \chi^2_1\)</span>. (A Spearman
+correlation test is a simpler alternative.)</li>
+<li>Collect the <span class="math inline">\(m\)</span> p-values, sort
+them <span class="math inline">\(p_{(1)} \le \dots \le
+p_{(m)}\)</span>.</li>
+<li>BH at <span class="math inline">\(q = 0.05\)</span>: find the
+largest <span class="math inline">\(k\)</span> with <span
+class="math inline">\(p_{(k)} \le \frac{k}{m}q\)</span>; reject <span
+class="math inline">\(H_{0(1)},\dots,H_{0(k)}\)</span>. In R:
+<code>p.adjust(p, method = "BH") &lt; 0.05</code>.</li>
+<li>Because features are strongly correlated, also report
+Benjamini–Yekutieli (<code>method = "BY"</code>), which is valid under
+arbitrary dependence, and Bonferroni for contrast.</li>
+<li>Report a table: feature, test statistic, raw p, BH-adjusted p,
+BY-adjusted p, selected (Y/N).</li>
+</ol>
+<p>Note for the report: screening uses <code>mal_median</code>, i.e. the
+naive response, before the EM model exists. That is acceptable as a
+screening step; say so.</p>
+<p>☐ Screening table (appendix); list of features that survive.</p>
+<hr />
+<h2 id="step-5--variable-selection-and-final-design-matrix-week-3">Step
+5 — Variable selection and final design matrix (Week 3)</h2>
+<p>Script: <code>R/03_select.R</code>. Topic 9.</p>
+<h3 id="51-collinearity">5.1 Collinearity</h3>
+<ul>
+<li>Compute VIFs (<code>car::vif</code> on a linear model of the same
+predictors, as a diagnostic).</li>
+<li>Among near-duplicates (diameter / log-volume / log-surface-area),
+keep <strong>one size variable</strong>. Prefer the one with the best
+univariate fit, or log-volume for interpretability.</li>
+</ul>
+<h3 id="52-criterion-based-selection">5.2 Criterion-based selection</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>full <span class="ot">&lt;-</span> <span class="fu">polr</span>(mal_median <span class="sc">~</span> ., <span class="at">data =</span> train_screened, <span class="at">Hess =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>sel_aic <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(full, <span class="at">direction =</span> <span class="st">&quot;both&quot;</span>, <span class="at">k =</span> <span class="dv">2</span>,              <span class="at">trace =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>sel_bic <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(full, <span class="at">direction =</span> <span class="st">&quot;both&quot;</span>, <span class="at">k =</span> <span class="fu">log</span>(<span class="fu">nrow</span>(train_screened)), <span class="at">trace =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<h3 id="53-shrinkage">5.3 Shrinkage</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ordinalNet)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>fit_lasso <span class="ot">&lt;-</span> <span class="fu">ordinalNet</span>(<span class="fu">as.matrix</span>(X_train), y_train,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">family =</span> <span class="st">&quot;cumulative&quot;</span>, <span class="at">link =</span> <span class="st">&quot;logit&quot;</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">parallelTerms =</span> <span class="cn">TRUE</span>, <span class="at">nonparallelTerms =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">alpha =</span> <span class="dv">1</span>)                 <span class="co"># alpha = 0 for ridge</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>cv <span class="ot">&lt;-</span> <span class="fu">ordinalNetCV</span>(<span class="fu">as.matrix</span>(X_train), y_train, <span class="at">family =</span> <span class="st">&quot;cumulative&quot;</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">link =</span> <span class="st">&quot;logit&quot;</span>, <span class="at">parallelTerms =</span> <span class="cn">TRUE</span>, <span class="at">nonparallelTerms =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">alpha =</span> <span class="dv">1</span>, <span class="at">tuneMethod =</span> <span class="st">&quot;cvLoglik&quot;</span>)</span></code></pre></div>
+<p>Plot the Lasso coefficient path vs λ (appendix figure).</p>
+<h3 id="54-decide">5.4 Decide</h3>
+<p>Compare the variable sets from AIC, BIC and Lasso. Choose the final
+set (BIC or Lasso-1SE usually gives the most parsimonious one) and
+<strong>justify it in one paragraph</strong>. Aim for roughly 3–6
+predictors.</p>
+<p>Caveat for the report: p-values from Step 6 onwards are computed on
+the same training data used for selection, so they are optimistic
+(post-selection inference). Mention it; optionally re-fit on a held-out
+half of the training data to check stability.</p>
+<p>☐ Final predictor list; table comparing AIC/BIC/Lasso selections;
+Lasso path figure.</p>
+<hr />
+<h2 id="step-6--naive-proportional-odds-model-week-3">Step 6 — Naive
+proportional odds model (Week 3)</h2>
+<p>Script: <code>R/04_polr.R</code>. Topic 2. This is the baseline the
+EM model will be compared against.</p>
+<h3 id="61-fit">6.1 Fit</h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>m_naive <span class="ot">&lt;-</span> <span class="fu">polr</span>(mal_median <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3, <span class="at">data =</span> train, <span class="at">Hess =</span> <span class="cn">TRUE</span>, <span class="at">method =</span> <span class="st">&quot;logistic&quot;</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m_naive)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(<span class="fu">coef</span>(m_naive))           <span class="co"># odds ratios</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(<span class="fu">confint</span>(m_naive))        <span class="co"># profile-likelihood CIs</span></span></code></pre></div>
+<p>Model: <span class="math inline">\(\operatorname{logit} P(Y \le k
+\mid x) = \alpha_k - x^\top\beta\)</span>, <span class="math inline">\(k
+= 1,\dots,4\)</span>.</p>
+<h3 id="62-interpret">6.2 Interpret</h3>
+<p>For a one-SD increase in <span class="math inline">\(x_j\)</span>,
+the odds of being in a <strong>higher</strong> malignancy category (vs.
+at or below any given threshold) multiply by <span
+class="math inline">\(e^{\beta_j}\)</span>, the same factor at every
+threshold. Note R's <code>polr</code> sign convention (<span
+class="math inline">\(\alpha_k - x^\top\beta\)</span>), so positive
+<span class="math inline">\(\beta\)</span> means higher malignancy.</p>
+<h3 id="63-figures">6.3 Figures</h3>
+<ul>
+<li>Predicted category probabilities <span class="math inline">\(P(Y = k
+\mid x)\)</span> vs. the size variable, with other predictors at their
+mean: five curves, one per category.</li>
+<li>Odds-ratio forest plot with 95% CIs.</li>
+</ul>
+<h3 id="64-secondary-model">6.4 Secondary model</h3>
+<p>Repeat with semantic features added; report the comparison in one
+table.</p>
+<p>☐ Coefficient table, odds-ratio plot, probability-curve plot.</p>
+<hr />
+<h2 id="step-7--em-latent-true-grade-model-weeks-45">Step 7 — EM latent
+true-grade model (Weeks 4–5)</h2>
+<p>Script: <code>R/05_em.R</code>. This is the core of the extension
+(Phase 4 of <code>PLAN.md</code>).</p>
+<h3 id="71-the-model">7.1 The model</h3>
+<ul>
+<li>Latent true grade <span class="math inline">\(Z_i \in
+\{1,\dots,5\}\)</span> with <span class="math inline">\(P(Z_i \le k \mid
+x_i) = \operatorname{logit}^{-1}(\alpha_k -
+x_i^\top\beta)\)</span>.</li>
+<li>Reader ratings: <span class="math inline">\(P(R_{ij} = r \mid Z_i =
+k) = \pi_{kr}\)</span>, one shared <span
+class="math inline">\(5\times5\)</span> matrix, rows summing to 1.</li>
+<li>Ratings conditionally independent given <span
+class="math inline">\(Z_i\)</span>.</li>
+<li>Observed-data log-likelihood: <span
+class="math display">\[\ell(\theta) = \sum_i \log \sum_{k=1}^5
+p_{ik}(\alpha,\beta) \prod_{r=1}^5 \pi_{kr}^{C_{ir}}\]</span> where
+<span class="math inline">\(p_{ik} = P(Z_i = k \mid x_i)\)</span> and
+<span class="math inline">\(C_{ir}\)</span> is the count matrix from
+Step 3.2.</li>
+</ul>
+<h3
+id="72-write-the-derivation-first-on-paper-then-into-the-appendix">7.2
+Write the derivation first (on paper, then into the appendix)</h3>
+<ol type="1">
+<li>Complete-data log-likelihood: <span class="math inline">\(\ell_c =
+\sum_i \sum_k \mathbb{1}\{Z_i=k\}\left[\log p_{ik} + \sum_r
+C_{ir}\log\pi_{kr}\right]\)</span>.</li>
+<li>Q-function: replace <span
+class="math inline">\(\mathbb{1}\{Z_i=k\}\)</span> by <span
+class="math inline">\(w_{ik} = P(Z_i = k \mid R_i, x_i;
+\theta^{(t)})\)</span>.</li>
+<li>Q separates into a <span class="math inline">\(\pi\)</span> part
+(closed-form maximiser) and an <span
+class="math inline">\((\alpha,\beta)\)</span> part (a weighted ordinal
+likelihood).</li>
+<li>Monotonicity proof: <span class="math inline">\(\ell(\theta) =
+Q(\theta\mid\theta^{(t)}) - H(\theta\mid\theta^{(t)})\)</span>, and
+<span class="math inline">\(H\)</span> is maximised at <span
+class="math inline">\(\theta^{(t)}\)</span> by Jensen / Gibbs'
+inequality.</li>
+</ol>
+<h3 id="73-implementation">7.3 Implementation</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>logsumexp <span class="ot">&lt;-</span> <span class="cf">function</span>(M) {             <span class="co"># row-wise log-sum-exp</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">apply</span>(M, <span class="dv">1</span>, max)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  m <span class="sc">+</span> <span class="fu">log</span>(<span class="fu">rowSums</span>(<span class="fu">exp</span>(M <span class="sc">-</span> m)))</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>em_dawid_skene_polr <span class="ot">&lt;-</span> <span class="cf">function</span>(X, C, <span class="at">K =</span> <span class="dv">5</span>, w_init, <span class="at">max_iter =</span> <span class="dv">500</span>, <span class="at">tol =</span> <span class="dv">1</span>e<span class="sc">-</span><span class="dv">8</span>) {</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(X); w <span class="ot">&lt;-</span> w_init; ll_trace <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">0</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(X)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  long <span class="ot">&lt;-</span> X[<span class="fu">rep</span>(<span class="fu">seq_len</span>(n), <span class="at">times =</span> K), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  long<span class="sc">$</span>z <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(<span class="fu">seq_len</span>(K), <span class="at">each =</span> n), <span class="at">levels =</span> <span class="fu">seq_len</span>(K), <span class="at">ordered =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_len</span>(max_iter)) {</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- M-step: confusion matrix (closed form) ----</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    num <span class="ot">&lt;-</span> <span class="fu">t</span>(w) <span class="sc">%*%</span> C                              <span class="co"># K x K</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    Pi  <span class="ot">&lt;-</span> num <span class="sc">/</span> <span class="fu">rowSums</span>(num)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    Pi  <span class="ot">&lt;-</span> <span class="fu">pmax</span>(Pi, <span class="dv">1</span>e<span class="sc">-</span><span class="dv">10</span>); Pi <span class="ot">&lt;-</span> Pi <span class="sc">/</span> <span class="fu">rowSums</span>(Pi)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- M-step: weighted proportional-odds fit ----</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    long<span class="sc">$</span>wt <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(w)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    keep <span class="ot">&lt;-</span> long<span class="sc">$</span>wt <span class="sc">&gt;</span> <span class="dv">1</span>e<span class="sc">-</span><span class="dv">8</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">polr</span>(z <span class="sc">~</span> . <span class="sc">-</span> wt, <span class="at">data =</span> long[keep, ], <span class="at">weights =</span> wt, <span class="at">Hess =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- E-step ----</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    P    <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> X, <span class="at">type =</span> <span class="st">&quot;probs&quot;</span>)          <span class="co"># n x K prior</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    logW <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="fu">pmax</span>(P, <span class="dv">1</span>e<span class="sc">-</span><span class="dv">300</span>)) <span class="sc">+</span> C <span class="sc">%*%</span> <span class="fu">t</span>(<span class="fu">log</span>(Pi))            <span class="co"># n x K</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    lse  <span class="ot">&lt;-</span> <span class="fu">logsumexp</span>(logW)</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    w    <span class="ot">&lt;-</span> <span class="fu">exp</span>(logW <span class="sc">-</span> lse)</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- convergence ----</span></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>    ll_trace <span class="ot">&lt;-</span> <span class="fu">c</span>(ll_trace, <span class="fu">sum</span>(lse))              <span class="co"># observed-data log-lik</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (t <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span> <span class="fu">abs</span>(<span class="fu">diff</span>(<span class="fu">tail</span>(ll_trace, <span class="dv">2</span>))) <span class="sc">&lt;</span> tol <span class="sc">*</span> <span class="fu">abs</span>(<span class="fu">tail</span>(ll_trace, <span class="dv">1</span>))) <span class="cf">break</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">Pi =</span> Pi, <span class="at">w =</span> w, <span class="at">loglik =</span> <span class="fu">tail</span>(ll_trace, <span class="dv">1</span>), <span class="at">trace =</span> ll_trace)</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Notes:</p>
+<ul>
+<li><strong>Initialisation:</strong> <code>w_init[i, k] = 1</code> if
+<code>k == mal_median[i]</code> (optionally smoothed, e.g. 0.8 on the
+median and 0.05 elsewhere). Also run 10–20 random Dirichlet
+initialisations and keep the fit with the largest log-likelihood.</li>
+<li><strong>Check the trace is non-decreasing.</strong> A decrease means
+a bug (usually in the E-step or in how weights are passed to
+<code>polr</code>).</li>
+<li><strong>Label switching:</strong> after fitting, check that <span
+class="math inline">\(\hat\pi\)</span> is diagonally dominant (<span
+class="math inline">\(\hat\pi_{kk}\)</span> is the largest entry in row
+<span class="math inline">\(k\)</span>). If not, the run converged to a
+permuted solution; discard it.</li>
+<li><strong>If <span class="math inline">\(\hat\pi\)</span> is
+unstable</strong> (rows for rare categories estimated from very few
+nodules): constrain it to be banded (<span
+class="math inline">\(\pi_{kr} = 0\)</span> for <span
+class="math inline">\(|k - r| &gt; 2\)</span>) or use the one-coin model
+(<span class="math inline">\(\pi_{kk} = p\)</span>, off-diagonals
+equal).</li>
+<li><code>polr</code> may warn about non-integer weights; that is
+harmless here. You can also use <code>ordinal::clm</code> with
+<code>weights =</code>.</li>
+</ul>
+<h3 id="74-standard-errors">7.4 Standard errors</h3>
+<p>Parametric or nonparametric bootstrap at the <strong>patient</strong>
+level:</p>
+<ol type="1">
+<li>Resample patients with replacement (B = 200 is enough for a course
+project).</li>
+<li>Re-run EM, initialised at the full-data MLE (fast convergence).</li>
+<li>Report bootstrap SEs and percentile CIs for <span
+class="math inline">\(\beta\)</span> and the diagonal of <span
+class="math inline">\(\pi\)</span>.</li>
+</ol>
+<p>(Louis' identity is the analytical alternative; mention it in the
+theory section even if you use the bootstrap.)</p>
+<h3 id="75-check-with-crowd-kit-optional-but-quick">7.5 Check with
+Crowd-Kit (optional but quick)</h3>
+<p>Fit plain Dawid–Skene without covariates (set the structural part to
+just class proportions) in your code and in Python's
+<code>crowd-kit</code> (<code>crowdkit.aggregation.DawidSkene</code>).
+The posterior class probabilities should agree closely.</p>
+<h3 id="76-outputs">7.6 Outputs</h3>
+<ul>
+<li>Table: <span class="math inline">\(\hat\beta\)</span> (naive, Step
+6) vs. <span class="math inline">\(\hat\beta\)</span> (EM), with
+SEs.</li>
+<li>Heatmap of <span class="math inline">\(\hat\pi\)</span> (rows = true
+grade, columns = reported rating).</li>
+<li>Log-likelihood trace plot.</li>
+<li>Distribution of posterior entropy of <span
+class="math inline">\(w_i\)</span>: which nodules are "ambiguous".</li>
+</ul>
+<p>☐ Converged EM fit; four outputs above.</p>
+<hr />
+<h2 id="step-8--simulation-study-week-5">Step 8 — Simulation study (Week
+5)</h2>
+<p>Script: <code>R/07_simulation.R</code>. This shows your EM
+implementation is correct, and it is a strong appendix item.</p>
+<ol type="1">
+<li>Fix "true" values: <span class="math inline">\(\beta\)</span> and
+<span class="math inline">\(\alpha\)</span> near your EM estimates, and
+a realistic <span class="math inline">\(\pi\)</span> (e.g. 0.6 on the
+diagonal, 0.15 on adjacent cells, the rest small).</li>
+<li>Simulate <span class="math inline">\(X\)</span> by resampling rows
+of the real design matrix, <span class="math inline">\(Z_i\)</span> from
+the PO model, and 1–4 ratings per nodule from <span
+class="math inline">\(\pi\)</span> (matching the real distribution of
+<code>n_readers</code>).</li>
+<li>Fit the EM model and the naive median-rating model.</li>
+<li>Repeat 200 times. Report bias and RMSE of <span
+class="math inline">\(\hat\beta\)</span> for both methods, and coverage
+of bootstrap CIs if time allows.</li>
+</ol>
+<p>Expected finding: the naive model's <span
+class="math inline">\(\hat\beta\)</span> is attenuated (biased toward 0)
+because the median rating is a noisy version of <span
+class="math inline">\(Z\)</span>; EM is approximately unbiased. Whether
+or not that happens, report it.</p>
+<p>☐ Simulation table (bias / RMSE, naive vs EM).</p>
+<hr />
+<h2 id="step-9--diagnostics-and-hypothesis-tests-week-6">Step 9 —
+Diagnostics and hypothesis tests (Week 6)</h2>
+<p>Script: <code>R/06_tests.R</code>. Phase 5 of
+<code>PLAN.md</code>.</p>
+<h3 id="91-proportional-odds-assumption">9.1 Proportional odds
+assumption</h3>
+<ul>
+<li><p><strong>Brant test</strong> (a Wald test) on the naive model:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brant)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">brant</span>(m_naive)          <span class="co"># omnibus + per-variable chi-square tests</span></span></code></pre></div></li>
+<li><p><strong>Likelihood-ratio alternative:</strong> fit with
+<code>ordinal::clm</code> and run <code>nominal_test(model)</code>,
+which compares the PO model with a partial PO model that frees each
+predictor's coefficient across thresholds.</p></li>
+<li><p>If a variable violates PO, either report it as a limitation or
+fit a partial PO model for that variable
+(<code>clm(..., nominal = ~ x_bad)</code>).</p></li>
+<li><p>Note: these tests are applied to the naive model; in the EM model
+PO is assumed for the latent grade.</p></li>
+</ul>
+<h3 id="92-likelihood-ratio-tests-wilks">9.2 Likelihood-ratio tests
+(Wilks)</h3>
+<p>For nested models <span class="math inline">\(M_0 \subset
+M_1\)</span>: <span class="math inline">\(\Lambda = -2(\ell_0 - \ell_1)
+\xrightarrow{d} \chi^2_{df}\)</span>, <span
+class="math inline">\(df\)</span> = difference in number of
+parameters.</p>
+<ul>
+<li><strong>Joint significance of all predictors:</strong> full model
+vs. intercept-only (thresholds only).</li>
+<li><strong>Each predictor:</strong> drop one at a time
+(<code>drop1(m_naive, test = "Chisq")</code>).</li>
+<li><strong>Semantic features add anything?</strong> Primary vs.
+secondary model.</li>
+<li><strong>For the EM model:</strong> refit EM under the reduced model
+and use the <strong>observed-data</strong> log-likelihoods from the
+<code>loglik</code> output. Do not use the complete-data
+likelihood.</li>
+</ul>
+<p>Write a short paragraph linking this to Neyman–Pearson: the LRT is
+the most powerful test in the simple-vs-simple case, and Wilks gives its
+asymptotic null distribution in the composite case.</p>
+<h3 id="93-model-fit">9.3 Model fit</h3>
+<ul>
+<li>Compare AIC/BIC of naive vs. secondary models.</li>
+<li>For the EM model, compare against the plain Dawid–Skene model
+without covariates (LRT: are the features informative about the true
+grade beyond the readers' ratings?).</li>
+</ul>
+<p>☐ Brant/nominal-test table; LRT table.</p>
+<hr />
+<h2 id="step-10--evaluation-on-the-test-set-week-6">Step 10 — Evaluation
+on the test set (Week 6)</h2>
+<p>Touch the test set <strong>once</strong>, after all modelling
+decisions are frozen.</p>
+<ol type="1">
+<li>Apply the training-set standardisation to the test predictors.</li>
+<li>For each model (naive primary, naive secondary, EM), compute:
+<ul>
+<li>accuracy and mean absolute error of the predicted category (mode of
+<span class="math inline">\(P(Z = k \mid x)\)</span>) vs.
+<code>mal_median</code>;</li>
+<li>quadratic-weighted Cohen's κ;</li>
+<li>AUC for the binary triage rule "malignancy ≥ 4" using <span
+class="math inline">\(P(Z \ge 4 \mid x)\)</span>;</li>
+<li>test log-likelihood of the observed <strong>reader ratings</strong>
+(for the EM model this is the observed-data log-likelihood; it is the
+fairest comparison).</li>
+</ul></li>
+<li>Calibration plot for <span class="math inline">\(P(Z \ge 4 \mid
+x)\)</span> (binned predicted vs. observed proportion).</li>
+</ol>
+<p>☐ Test-set performance table; calibration plot.</p>
+<hr />
+<h2 id="step-11--policy-interpretation-week-7">Step 11 — Policy
+interpretation (Week 7)</h2>
+<p>Tie the results to the triage recommendation in
+<code>PLAN.md</code>:</p>
+<ul>
+<li>Propose a rule such as: flag a nodule for priority review if <span
+class="math inline">\(P(Z \ge 4 \mid x) &gt; \tau\)</span>. Choose <span
+class="math inline">\(\tau\)</span> from the test-set ROC (e.g.
+sensitivity ≥ 0.9) and report the resulting workload (fraction
+flagged).</li>
+<li>Use <span class="math inline">\(\hat\pi\)</span> to say something
+concrete about reader reliability (e.g. "a true grade-4 nodule is rated
+3 or lower X% of the time"). This supports using a model as a second
+reader.</li>
+</ul>
+<p><strong>Limitations you must state:</strong></p>
+<ol type="1">
+<li>LIDC "malignancy" is radiologists' <strong>suspicion</strong>, not
+pathology-confirmed diagnosis. The model predicts expert opinion, not
+cancer. (TCIA hosts a diagnosis spreadsheet for a small subset of LIDC
+patients; mention it as possible external validation.)</li>
+<li>No intensity-based radiomics (no DICOM).</li>
+<li>Circularity of semantic features.</li>
+<li>Post-selection inference.</li>
+<li>Conditional-independence assumption of readers in the EM model.</li>
+<li>LIDC is a research dataset from a few US centres; generalisation to
+a public-health setting such as Indian hospitals is untested.</li>
+</ol>
+<hr />
+<h2 id="step-12--write-the-report-weeks-78">Step 12 — Write the report
+(Weeks 7–8)</h2>
+<p><code>report/report.tex</code>. <strong>Max 5 pages, double-spaced,
+A4.</strong> Appendix does not count.</p>
+<h3 id="121-preamble">12.1 Preamble</h3>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode latex"><code class="sourceCode latex"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">\documentclass</span>[11pt]{<span class="ex">article</span>}</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[a4paper, margin=2.5cm]{<span class="ex">geometry</span>}</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">setspace</span>}<span class="fu">\doublespacing</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">amsmath, amssymb, booktabs, graphicx, hyperref</span>}</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[style=authoryear]{<span class="ex">biblatex</span>}<span class="fu">\addbibresource</span>{refs.bib}</span></code></pre></div>
+<h3 id="122-main-text--page-budget">12.2 Main text (≈ page budget)</h3>
+<ol type="1">
+<li><strong>Introduction and research questions</strong> (0.5 p).
+Example RQs:
+<ul>
+<li>RQ1: Which geometric nodule features are associated with
+radiologist-assessed malignancy after FDR control?</li>
+<li>RQ2: Does the proportional-odds model adequately describe that
+relationship?</li>
+<li>RQ3: Does accounting for inter-reader disagreement (EM) change the
+estimated effects?</li>
+</ul></li>
+<li><strong>Data</strong> (0.75 p): LIDC-IDRI, pylidc, unit of analysis,
+aggregation, train/test split, counts table.</li>
+<li><strong>Methodology</strong> (1.5 p): BH screening → selection → PO
+model → EM latent-grade model → Brant/LRT. Equations, not code.</li>
+<li><strong>Results</strong> (1.5 p): one coefficient table (naive vs
+EM), one key figure (probability curves or <span
+class="math inline">\(\hat\pi\)</span> heatmap), test results in
+text.</li>
+<li><strong>Discussion, policy recommendations, limitations</strong>
+(0.75 p).</li>
+</ol>
+<h3 id="123-appendix-no-page-limit">12.3 Appendix (no page limit)</h3>
+<ul>
+<li>A: Full code (use <code>listings</code> or <code>minted</code>, or
+<code>\input</code> the scripts).</li>
+<li>B: BH screening table, selection comparison, Lasso path.</li>
+<li>C: Full coefficient tables, odds-ratio plot, probability curves for
+each category.</li>
+<li>D: EM derivation, monotonicity proof, log-likelihood trace.</li>
+<li>E: Simulation study.</li>
+<li>F: Brant and LRT tables; calibration plot.</li>
+</ul>
+<h3 id="124-bibliography-minimum">12.4 Bibliography (minimum)</h3>
+<p>Armato et al. (2011, <em>Medical Physics</em>) for LIDC-IDRI; Hancock
+&amp; Magnan (2016) for pylidc; McCullagh (1980) for PO models; Brant
+(1990); Benjamini &amp; Hochberg (1995); Dempster, Laird &amp; Rubin
+(1977); Dawid &amp; Skene (1979); Agresti.</p>
+<p>Compile, check the page count with the appendix excluded, and ask
+someone outside the group to read it once.</p>
+<p>☐ <code>report.pdf</code>, ≤ 5 pages of main text.</p>
+<hr />
+<h2 id="step-13--slides-and-defense-week-8">Step 13 — Slides and defense
+(Week 8)</h2>
+<p><code>slides/slides.tex</code> (Beamer). <strong>Fewer than 16
+slides, 20–25 minutes, 5–7 minutes per member.</strong></p>
+<p>Suggested 15-slide structure and split (assuming 4 members):</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Slide</th>
+<th>Speaker</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Title</td>
+<td>A</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Motivation: nodule triage, reader disagreement</td>
+<td>A</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Data: LIDC-IDRI, unit of analysis, counts</td>
+<td>A</td>
+</tr>
+<tr>
+<td>4</td>
+<td>EDA: malignancy distribution, reader disagreement</td>
+<td>A</td>
+</tr>
+<tr>
+<td>5</td>
+<td>BH screening</td>
+<td>B</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Variable selection (AIC/BIC/Lasso)</td>
+<td>B</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Proportional odds model</td>
+<td>B</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Naive model results: odds ratios, probability curves</td>
+<td>B</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Why EM: latent true grade</td>
+<td>C</td>
+</tr>
+<tr>
+<td>10</td>
+<td>E-step / M-step and monotonicity</td>
+<td>C</td>
+</tr>
+<tr>
+<td>11</td>
+<td>EM results: <span class="math inline">\(\hat\pi\)</span> heatmap,
+<span class="math inline">\(\beta\)</span> comparison</td>
+<td>C</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Simulation study</td>
+<td>C</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Brant test and LRTs</td>
+<td>D</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Test-set performance and triage rule</td>
+<td>D</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Limitations and conclusions</td>
+<td>D</td>
+</tr>
+</tbody>
+</table>
+<p>Preparation:</p>
+<ul>
+<li>Every member should be able to answer questions on every slide, not
+only their own.</li>
+<li>Likely questions: Why not plain logistic regression? Why is Brant a
+Wald test? Why does EM increase the likelihood? Are readers really
+conditionally independent? What does <span
+class="math inline">\(\hat\pi\)</span> mean clinically? Why is
+malignancy not ground truth?</li>
+<li>Do two full timed rehearsals.</li>
+</ul>
+<p>☐ <code>slides.pdf</code>; two rehearsals done.</p>
+<hr />
+<h2
+id="suggested-timeline-8-weeks-compress-if-your-deadline-is-sooner">Suggested
+timeline (8 weeks; compress if your deadline is sooner)</h2>
+<table>
+<thead>
+<tr>
+<th>Week</th>
+<th>Steps</th>
+<th>Milestone</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0, 1, 2</td>
+<td>Environment works; <code>annotations.csv</code> extracted; reading
+started</td>
+</tr>
+<tr>
+<td>2</td>
+<td>3, 4</td>
+<td>Nodule-level train/test tables; EDA; BH screening done</td>
+</tr>
+<tr>
+<td>3</td>
+<td>5, 6</td>
+<td>Final predictors; naive PO model fitted</td>
+</tr>
+<tr>
+<td>4</td>
+<td>7.1–7.3</td>
+<td>EM derivation written; EM code converging</td>
+</tr>
+<tr>
+<td>5</td>
+<td>7.4–7.6, 8</td>
+<td>Bootstrap SEs; simulation study</td>
+</tr>
+<tr>
+<td>6</td>
+<td>9, 10</td>
+<td>Diagnostics, LRTs, test-set evaluation</td>
+</tr>
+<tr>
+<td>7</td>
+<td>11, 12</td>
+<td>Policy section; report draft</td>
+</tr>
+<tr>
+<td>8</td>
+<td>12, 13</td>
+<td>Report final; slides; rehearsals</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Fallback if time runs short:</strong> the EM model (Steps
+7–8) is the extension. Steps 2–6 and 9–13 alone form a complete project
+that matches the original plan. Get those working first; do not let EM
+debugging block the rest.</p>
+</body>
+</html>
