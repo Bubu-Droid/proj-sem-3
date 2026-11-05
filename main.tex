@@ -1,0 +1,422 @@
+\documentclass[12pt]{article}
+\usepackage{statproj}
+
+\definecolor{myblue}{HTML}{4c72b0}
+\definecolor{myorange}{HTML}{dd8452}
+
+\title{Ordinal and Latent-Class Modelling of Radiologist-Assessed
+Lung Nodule Malignancy}
+\author{Avigyan Chakraborty}
+\date{November, 2026}
+
+\begin{document}
+
+\maketitlepage{\thetitle}{\theauthor}{\thedate}{%
+  This project models the malignancy rating that radiologists
+  assign to lung nodules on CT scans, using the LIDC-IDRI
+  database. Each nodule is rated on an ordered 1--5 scale by up to
+  four radiologists, who frequently disagree. We extract the
+  radiologists' annotations with the \texttt{pylidc} library,
+  derive geometric shape features from the drawn contours, and
+  aggregate the $6859$ annotations into $2637$ nodules from $870$
+  patients.
+
+  Exploratory analysis of the training set shows that nodule size
+  separates the upper malignancy grades sharply but barely
+  distinguishes grades 1 to 3, that the size measures are
+  almost perfectly collinear, and that agreement between
+  radiologists is only fair (Fleiss' $\kappa = 0.21$). These
+  findings motivate the planned analysis: false-discovery-rate
+  screening of features, variable selection, a proportional odds
+  model, and a latent-class extension fitted by the EM algorithm
+  in which the true malignancy grade is unobserved.%
+}
+
+\makecontents
+
+% Project parameters: A4, double-spaced main text
+\doublespacing
+
+\section{Introduction}
+
+Lung cancer is commonly first detected as a small nodule on a
+computed tomography (CT) scan. Most nodules are benign, so
+radiologists grade how suspicious each one looks, and that grade
+determines follow-up. In a public health system with limited
+specialist time, a statistical model that predicts this grade
+from measurable properties of the nodule could help prioritise
+scans for review.
+
+The Lung Image Database Consortium and Image Database Resource
+Initiative (LIDC-IDRI)\cite{armato2011lidc} provides such grades.
+Up to four radiologists independently outlined every nodule of
+at least $3$\,mm and rated its likelihood of malignancy on an
+ordered scale from $1$ (highly unlikely) to $5$ (highly
+suspicious). The response is therefore ordinal, with categories
+that are ranked but not equally spaced, and it is observed
+several times per nodule with considerable disagreement.
+
+We address three research questions.
+\begin{enumerate}
+  \ii Which geometric properties of a nodule are associated with
+    its malignancy rating, once the false discovery rate is
+    controlled across the candidate features?
+  \ii Does a proportional odds model\cite{mccullagh1980}
+    adequately describe that association?
+  \ii Does explicitly modelling disagreement between
+    radiologists, by treating the true grade as a latent
+    variable estimated with the EM
+    algorithm\cite{dempster1977,dawid1979}, change the estimated
+    effects?
+\end{enumerate}
+
+This document records the work completed so far: data
+acquisition, cleaning, validation and exploratory analysis.
+\Cref{sec:plan} outlines the modelling that follows.
+
+\section{Data Description}
+
+\subsection{Source and Structure}
+
+LIDC-IDRI is hosted by The Cancer Imaging
+Archive\cite{clark2013tcia}. The full image collection is about
+133\,GB, but the radiologists' annotations are distributed as XML
+and are bundled, already parsed, with the Python library
+\texttt{pylidc}\cite{hancock2016pylidc}. Every quantity used in
+this project is computed from these annotations, so no CT images
+were downloaded.
+
+The data are hierarchical:
+\[
+  \text{patient} \;\to\; \text{scan} \;\to\; \text{nodule}
+  \;\to\; \text{annotation}.
+\]
+The database contains $1018$ scans, of which $883$ (from $875$
+patients) contain at least one nodule annotation; $8$ patients
+have two scans. An \emph{annotation} is one radiologist's outline
+and ratings of one nodule. Annotations of the same physical
+nodule are grouped with \texttt{pylidc}'s clustering routine,
+giving $2651$ nodules with $1$ to $4$ annotations each. The
+nodule, not the annotation, is our unit of analysis.
+
+\subsection{Variables}
+
+For each annotation we record the following.
+\begin{itemize}
+  \ii \textbf{Malignancy} (response): ordinal rating $1$--$5$.
+  \ii \textbf{Semantic ratings}: subtlety, sphericity, margin,
+    lobulation, spiculation and texture, each an ordinal $1$--$5$
+    rating by the same radiologist. Calcification ($1$--$6$) and
+    internal structure ($1$--$4$) are nominal categories.
+  \ii \textbf{Geometric features from \texttt{pylidc}}: diameter
+    (mm), surface area (mm$^2$) and volume (mm$^3$) of the
+    outlined region.
+  \ii \textbf{Shape features from the binary mask}: height of the
+    bounding box (mm), number of slices spanned, elongation and
+    flatness (square roots of the ratios of the second and third
+    eigenvalues of the voxel-coordinate covariance to the first),
+    convex-hull volume, and solidity (voxels in the nodule divided
+    by voxels in its convex hull).
+\end{itemize}
+
+Intensity-based texture features (for example, grey-level
+co-occurrence statistics) require the CT images and are therefore
+not available. The candidate predictors are the geometric and
+shape features, and, as a secondary analysis, the semantic
+ratings.
+
+\section{Data Processing}
+\label{sec:processing}
+
+\subsection{Cleaning and Aggregation}
+
+\paragraph{Over-merged clusters.}
+LIDC-IDRI used four readers per scan, so a cluster of more than
+four annotations means that neighbouring lesions were merged by
+the clustering routine. The $14$ such clusters ($81$ annotations)
+were removed, leaving $2637$ nodules from $870$ patients.
+
+\paragraph{Aggregation to nodules.}
+For each nodule, geometric and shape features are averaged over
+readers, since each reader drew a slightly different outline.
+Ordinal semantic ratings are summarised by their median. Every
+reader's malignancy rating is kept, both as columns
+$R_{i1},\dots,R_{i4}$ and as counts
+\[
+  C_{ir} = \#\{\, j : R_{ij} = r \,\}, \qquad r = 1,\dots,5,
+\]
+which are the input to the latent-class model.
+
+\paragraph{Nominal ratings.}
+Calcification and internal structure are category labels, not
+rankings, and are almost constant: $6819$ of the $6859$
+annotations record soft-tissue internal structure. Both are
+excluded from modelling and retained only in the master table.
+One annotation records an internal-structure value of $5$,
+outside the documented range; it has no effect on the analysis.
+
+\paragraph{Median ties.}
+A single response per nodule is needed for screening and for the
+baseline model, and we use the median rating. When an even
+number of readers disagree on the middle two ratings, the median
+falls between grades; for example, ratings $(2,3,4,4)$ give
+$3.5$. \Cref{tab:ties} shows that this occurs for $548$ nodules
+($20.8\%$). We round such medians \emph{up}, which is the
+conservative choice for triage, and flag them. The latent-class
+model uses all ratings and needs no such rule.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c | c | c | c | c ||}
+    \hline
+    \textbf{Readers} & \textbf{1.5} & \textbf{2.5} & \textbf{3.5}
+    & \textbf{4.5} & \textbf{Total} \\
+    \hline\hline
+    2 & 30 & 141 & 39 & 6 & 216 \\
+    4 & 6 & 134 & 128 & 64 & 332 \\
+    \hline
+  \end{tabular}
+  \caption{Nodules whose median malignancy lies between two grades}
+  \label{tab:ties}
+\end{table}
+
+\paragraph{Transformations.}
+Volume, surface area and convex-hull volume are strongly
+right-skewed and are log-transformed. We also define
+compactness $= V^{2/3}/S$ for volume $V$ and surface area $S$.
+Predictors are stored unstandardised; they are standardised
+within each modelling step using training-set means and standard
+deviations only.
+
+\subsection{Train/Test Split}
+
+Nodules of the same patient are not independent, so the data are
+split at the patient level: $70\%$ of patients ($1809$ nodules)
+form the training set and $30\%$ ($828$ nodules) the test set.
+All exploratory analysis, screening and model selection use the
+training set; the test set is reserved for the final evaluation.
+
+\subsection{Validation}
+
+An automated check script verifies the extracted and processed
+tables. It confirms, among other things, that every rating lies
+in its documented range, that no values are infinite, that the
+counts $C_{ir}$ match the individual ratings, that the median
+and tie flags follow the rule above, that the aggregated features
+equal the reader means and medians recomputed from the raw file,
+and that no patient appears in both the training and test sets.
+All checks pass. Re-running the cleaning step reproduces the
+processed files exactly.
+
+\section{Exploratory Analysis}
+
+All results in this section use the $1809$ training nodules.
+
+\subsection{Distribution of the Response}
+
+\Cref{fig:mal} shows that grade $3$ (``indeterminate'') dominates:
+it is the median grade of $45.5\%$ of nodules and accounts for
+$37.5\%$ of all individual ratings. The extreme grades are used
+more often by individual readers than by the median, which is
+expected when readers disagree.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{./figures/mal-distribution.pdf}
+  \caption{Median malignancy per nodule (left) and all individual
+    ratings (right), training set}
+  \label{fig:mal}
+\end{figure}
+
+\subsection{Features by Malignancy Grade}
+
+\Cref{tab:summary} summarises the geometric features and
+\cref{fig:features} shows them by median grade. Size is the
+dominant signal, but its effect is far from linear: the median
+diameter is $6.4$, $6.7$ and $7.4$\,mm for grades $1$, $2$ and
+$3$, then rises to $13.9$ and $22.8$\,mm for grades $4$ and $5$.
+Grade $1$ nodules are even slightly larger than grade $2$
+nodules; a plausible explanation is that calcified nodules, which
+are benign regardless of size, are rated $1$. Solidity and
+compactness decrease with grade, so suspicious nodules are less
+convex and less sphere-like, while elongation and flatness show
+no clear trend.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| l | c | c | c | c ||}
+    \hline
+    \textbf{Feature} & \textbf{Mean} & \textbf{Std.\ Dev.}
+    & \textbf{Minimum} & \textbf{Maximum} \\
+    \hline\hline
+    Diameter (mm)       & 10.137 & 6.818 & 2.586 & 49.945 \\
+    log Volume          & 5.118 & 1.394 & 2.442 & 10.345 \\
+    log Surface area    & 5.181 & 1.077 & 2.799 & 9.108 \\
+    log Convex volume   & 5.111 & 1.553 & 1.653 & 10.812 \\
+    Height (mm)         & 7.564 & 5.782 & 1.000 & 57.500 \\
+    Elongation          & 0.753 & 0.121 & 0.306 & 0.988 \\
+    Flatness            & 0.555 & 0.164 & 0.000 & 0.921 \\
+    Solidity            & 0.795 & 0.106 & 0.228 & 1.000 \\
+    Compactness         & 0.177 & 0.044 & 0.058 & 0.312 \\
+    \hline
+  \end{tabular}
+  \caption{Summary statistics of the geometric features, training set}
+  \label{tab:summary}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{./figures/features-by-grade.pdf}
+  \caption{Geometric features by median malignancy grade, training set}
+  \label{fig:features}
+\end{figure}
+
+\subsection{Collinearity}
+
+\Cref{fig:corr} shows Spearman correlations between the
+features. Diameter, log volume, log surface area and log convex
+volume are correlated at $0.91$ to $1.00$; they measure the same
+thing, and at most one should enter the model. Elongation and
+flatness are nearly uncorrelated with size and carry separate
+information.
+
+The number of slices a nodule spans depends on the scan
+protocol as well as on the nodule: its correlation with slice
+spacing is $-0.52$, because thinner slices give more slices for
+the same nodule. It is therefore excluded in favour of the
+physical height in millimetres.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth,keepaspectratio]{./figures/correlation.pdf}
+  \caption{Spearman correlation between geometric features,
+    training set}
+  \label{fig:corr}
+\end{figure}
+
+\subsection{Agreement Between Radiologists}
+
+Of the $1285$ training nodules rated by two or more radiologists,
+only $288$ ($22.4\%$) received identical ratings, and $151$ have
+ratings three or more grades apart (\cref{tab:range,fig:agree}).
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c | c | c | c | c | c ||}
+    \hline
+    \textbf{Readers} & \textbf{0} & \textbf{1} & \textbf{2}
+    & \textbf{3} & \textbf{4} & \textbf{Total} \\
+    \hline\hline
+    2 & 147 & 137 & 50 & 5 & 0 & 339 \\
+    3 & 63 & 160 & 93 & 19 & 4 & 339 \\
+    4 & 78 & 176 & 230 & 104 & 19 & 607 \\
+    \hline
+    Total & 288 & 473 & 373 & 128 & 23 & 1285 \\
+    \hline
+  \end{tabular}
+  \caption{Range (maximum minus minimum) of the malignancy ratings
+    of each multi-reader nodule, training set}
+  \label{tab:range}
+\end{table}
+
+To summarise agreement we use Fleiss'
+$\kappa$\cite{fleiss1971}, which allows the number of raters
+$n_i$ to vary between nodules. The proportion of agreeing rater
+pairs for nodule $i$, the overall rating proportions, and
+$\kappa$ are
+\[
+  P_i = \frac{\sum_{r} C_{ir}(C_{ir}-1)}{n_i(n_i-1)}, \qquad
+  p_r = \frac{\sum_i C_{ir}}{\sum_i n_i}, \qquad
+  \kappa = \frac{\bar{P} - P_e}{1 - P_e}, \quad
+  P_e = \sum_{r} p_r^2,
+\]
+where $\bar{P}$ is the mean of $P_i$ over multi-reader nodules.
+We obtain $\bar{P} = 0.400$, $P_e = 0.240$ and $\kappa = 0.210$,
+which is only ``fair'' agreement on the scale of Landis and
+Koch\cite{landis1977}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth,keepaspectratio]{./figures/reader-agreement.pdf}
+  \caption{Range of malignancy ratings by number of readers,
+    training set}
+  \label{fig:agree}
+\end{figure}
+
+\subsection{Semantic Ratings}
+
+The Spearman correlation of the median malignancy with
+spiculation ($0.42$) and lobulation ($0.40$) is almost as large as
+with diameter ($0.51$). These ratings, however, come from the same
+radiologists who rate malignancy, so a model using them partly
+predicts a radiologist's opinion from the same radiologist's
+other opinions. They are therefore reserved for a secondary
+model.
+
+\section{Implications and Planned Analysis}
+\label{sec:plan}
+
+The exploratory analysis shapes the remaining work as follows.
+\begin{enumerate}
+  \ii \textbf{Screening.} Each candidate feature will be tested for
+    association with malignancy using a univariate proportional
+    odds likelihood ratio test, and the Benjamini--Hochberg
+    procedure\cite{benjamini1995} will control the false discovery
+    rate. Because the features are strongly correlated, the
+    Benjamini--Yekutieli correction will be reported as well.
+  \ii \textbf{Selection.} Only one size variable can be retained
+    (\cref{fig:corr}). AIC, BIC and the ordinal Lasso will be
+    compared to fix the final design matrix.
+  \ii \textbf{Proportional odds model.} With $K=5$ grades,
+    \[
+      \operatorname{logit} P(Y_i \le k \mid x_i) = \alpha_k -
+      x_i\trans\beta, \qquad k = 1,\dots,4,
+    \]
+    so $e^{\beta_j}$ is the common odds ratio of a higher grade per
+    unit increase in $x_j$. The non-linear size pattern in
+    \cref{fig:features} suggests that the proportional odds
+    assumption may fail, and it will be tested with the Brant
+    test\cite{brant1990} and a likelihood ratio test against a
+    partial proportional odds model.
+  \ii \textbf{Latent-class model.} The low agreement
+    ($\kappa = 0.21$) motivates treating the true grade
+    $Z_i \in \{1,\dots,5\}$ as unobserved, with the proportional
+    odds model for $Z_i$ and a shared confusion matrix
+    $\pi_{kr} = P(R_{ij} = r \mid Z_i = k)$ for the readers, in the
+    spirit of Dawid and Skene\cite{dawid1979}. The model will be
+    fitted by the EM algorithm and compared with the median-rating
+    model, both through likelihood ratio tests and on the test set.
+\end{enumerate}
+
+\appendix
+\section{Appendix}
+
+\subsection{Dataset}
+
+The LIDC-IDRI database\cite{armato2011lidc} is available from The
+Cancer Imaging Archive\cite{clark2013tcia}:
+\begin{itemize}
+  \ii TCIA:
+    \href{https://www.cancerimagingarchive.net/collection/lidc-idri/}
+    {cancerimagingarchive.net/collection/lidc-idri}
+\end{itemize}
+The annotations were read with \texttt{pylidc} version $0.2.3$\cite{hancock2016pylidc}.
+
+\subsection{Code}
+
+The analysis is organised as a pipeline of scripts, run from the
+repository root.
+\begin{itemize}
+  \ii \texttt{python/extract.py}: reads the annotations with
+    \texttt{pylidc} and computes the shape features
+    (\texttt{data/raw/annotations.csv}).
+  \ii \texttt{R/01\_clean.R}: aggregates to nodules, applies the
+    rules of \cref{sec:processing} and splits the data (\texttt{data/processed/}).
+  \ii \texttt{R/check\_data.R}: validation checks.
+  \ii \texttt{R/eda.R}: exploratory analysis and figures.
+\end{itemize}
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
