@@ -25,3 +25,6 @@ __pycache__/
 *.fls
 *.fdb_latexmk
 *.synctex.gz
+
+# latexmk aux_dir
+buildtmp/
