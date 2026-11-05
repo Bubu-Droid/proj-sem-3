@@ -22,9 +22,25 @@ conventions, update it in the same commit.
 ```bash
 uv run python python/extract.py   # -> data/raw/annotations.csv (slow; run once)
 Rscript R/01_clean.R              # -> data/processed/*.csv
+Rscript R/check_data.R            # sanity checks; exits non-zero on failure
+Rscript R/eda.R                   # -> figures/*.pdf, prints numbers used in main.tex
 ```
 
 `data/raw/annotations.csv` is the master file and is never edited by hand.
+Re-run `R/check_data.R` after any change to extraction or cleaning.
+
+Installing R packages from source (`ordinal`, `car`, and their dependencies)
+needs a Fortran compiler: `sudo pacman -S gcc-fortran`.
+
+## Report
+
+`main.tex` uses `statproj.sty` (title page, minted) and `refs.bib` with plain
+BibTeX. Build with `latexmk -pdf -shell-escape main.tex`; the user's global
+latexmkrc puts aux files in `buildtmp/` (ignored). `main.pdf` is committed.
+Numbers in `main.tex` are typed in by hand from `R/eda.R` and `R/01_clean.R`
+output, so update them when the data or scripts change. Main text must be
+double-spaced A4; `\doublespacing` comes after `\makecontents` so the title
+page stays on one page.
 
 ## Data conventions
 
@@ -41,7 +57,8 @@ Rscript R/01_clean.R              # -> data/processed/*.csv
 ## Git
 
 Conventional Commits (`feat`, `fix`, `docs`, `build`, `chore`, `refactor`,
-with an optional scope such as `feat(clean):`).
+with an optional scope such as `feat(clean):`). Keep commits small and
+focused: one logical change per commit, never one large catch-all commit.
 
 After editing `STEPS.md`, regenerate the HTML:
 
