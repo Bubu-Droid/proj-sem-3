@@ -34,10 +34,16 @@ needs a Fortran compiler: `sudo pacman -S gcc-fortran`.
 
 ## Report
 
-`main.tex` uses `statproj.sty` (title page, minted) and `refs.bib` with plain
-BibTeX. Build with `latexmk -pdf -shell-escape main.tex`; the user's global
-latexmkrc puts aux files in `buildtmp/` (ignored). `main.pdf` is committed.
-Numbers in `main.tex` are typed in by hand from `R/eda.R` and `R/01_clean.R`
+All LaTeX lives in `core/`: `main.tex` uses `statproj.sty` (title page,
+minted) and `refs.bib` with plain BibTeX, and includes figures from
+`../figures/`. Build from inside `core/`:
+
+```bash
+cd core && latexmk -pdf -shell-escape main.tex
+```
+
+The user's global latexmkrc puts aux files in `core/buildtmp/` (ignored).
+`core/main.pdf` is committed. Numbers in `main.tex` are typed in by hand from `R/eda.R` and `R/01_clean.R`
 output, so update them when the data or scripts change. Main text must be
 double-spaced A4; `\doublespacing` comes after `\makecontents` so the title
 page stays on one page.
