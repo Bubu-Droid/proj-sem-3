@@ -1,0 +1,171 @@
+% statproj.sty
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{statproj}[2025/11/01 Statistics Project Style]
+
+% Required packages
+\RequirePackage{geometry}
+\RequirePackage{graphicx}
+\RequirePackage{float}
+\RequirePackage{titlesec}
+\RequirePackage{titling}
+\RequirePackage{tocloft}
+\RequirePackage{abstract}
+\RequirePackage{setspace}
+\RequirePackage{lmodern}
+\RequirePackage[svgnames,dvipsnames]{xcolor}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{hyperref}
+\RequirePackage[capitalize,nameinlink]{cleveref}
+\RequirePackage{csvsimple}
+\RequirePackage{booktabs}
+\RequirePackage{siunitx}
+\RequirePackage{longtable}
+\RequirePackage{caption}
+\RequirePackage{array}
+\RequirePackage{minted}
+\RequirePackage{setspace}
+\RequirePackage{multirow}
+\RequirePackage{yhmath}
+
+\hypersetup{%
+    pdftitle={\@title},
+    pdfauthor={\@author},
+    pdfsubject={Statistics Assignment},
+    pdfcreator={LaTeX with statproj.sty},
+    colorlinks=true,
+    urlcolor=RoyalBlue,
+    % linkcolor=RoyalBlue,
+    citecolor=ForestGreen
+    % linktoc=all
+}
+
+% --- Light color palette ---
+\definecolor{codebg}{HTML}{FAFAFA}
+\definecolor{coderule}{HTML}{DDDDDD}
+\definecolor{codecomment}{HTML}{7A7A7A}
+\definecolor{codekeyword}{HTML}{005CC5}
+\definecolor{codestring}{HTML}{DD1144}
+\definecolor{codenum}{HTML}{999999}
+
+% --- Global minted style ---
+\setminted{
+  bgcolor=codebg,
+  fontsize=\small,
+  baselinestretch=1.05,
+  breaklines=true,
+  frame=lines,
+  framesep=2mm,
+  rulecolor=\color{coderule},
+  xleftmargin=1em,
+  linenos,
+  numbersep=8pt,
+  fontfamily=tt,
+  tabsize=2
+}
+
+% Optional: make line numbers gray
+\renewcommand{\theFancyVerbLine}{\textcolor{codenum}{\small\arabic{FancyVerbLine}}}
+
+% Optional: slightly nicer syntax scheme
+\usemintedstyle{friendly}
+
+% Page layout
+\geometry{a4paper, margin=1in}
+
+% Title page formatting with abstract
+\renewenvironment{titlepage}
+    {\newpage\centering}
+    {\newpage}
+
+% Abstract formatting
+\renewcommand{\abstractnamefont}{\normalfont\Large\bfseries}
+\renewcommand{\abstracttextfont}{\normalfont\normalsize\singlespacing}
+
+% Section formatting with bold section names
+\titleformat{\section}
+{\Large\bfseries}
+{\thesection}{1em}{}
+
+\titleformat{\subsection}
+{\large\bfseries}
+{\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+{\normalsize\bfseries}
+{\thesubsubsection}{1em}{}
+
+% Table of contents formatting - improved spacing and clickable links
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsecfont}{\large\bfseries\normalfont}
+\renewcommand{\cftsecpagefont}{\large\bfseries\normalfont}
+\renewcommand{\cftsubsecfont}{\normalsize\bfseries\normalfont}
+\renewcommand{\cftsubsecpagefont}{\normalsize\bfseries\normalfont}
+\renewcommand{\cfttoctitlefont}{\Huge\bfseries}
+\setlength{\cftbeforesecskip}{12pt} % Increased space between sections
+\setlength{\cftbeforesubsecskip}{8pt} % Space between subsections
+\setlength{\cftaftertoctitleskip}{20pt} % Space after "Contents" title
+
+% Custom commands
+\newcommand{\doublerule}{%
+\begin{center}
+  \rule{0.9\textwidth}{0.4pt} \\[\dimexpr 0.15cm - \baselineskip \relax]
+  \rule{0.9\textwidth}{0.4pt}
+\end{center}%
+}
+
+
+\newcommand{\maketitlepage}[4]{%
+    \thispagestyle{empty}
+    \begin{titlepage}
+        \centering
+        % \vspace*{2cm} % Added top padding
+        \begin{center}
+          \includegraphics[width=0.175\textwidth]{./isilogo.png}
+        \end{center}
+        {\Huge\textsc{#1}\par}
+        % \vspace{1cm} % Increased space after title
+        \doublerule
+        % \vspace{0.25cm} % Increased space rules
+        {\Large\textsc{Avigyan Chakraborty}\par}
+        {\large\textsc{Roll No.: \textbf{BS2516}}\par}
+        \vspace{0.25cm} % Increased space after name
+        {\large\textsc{\thedate}\par}
+        % \vspace{0.5cm} % Increased space after name
+        \doublerule
+        % \vspace{1cm} % Increased space before abstract
+        \begin{abstract}
+          \vspace*{-0.5cm}
+          #4
+        \end{abstract}
+    \end{titlepage}
+}
+
+\newcommand{\makecontents}{%
+    \newgeometry{left=1in,top=1in,right=1in,bottom=0.5cm}
+    \tableofcontents
+    \restoregeometry
+    \thispagestyle{empty}
+    \newpage
+}
+
+% Better paragraph spacing
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+
+% Line spacing
+\onehalfspacing
+
+% Better itemize environment
+\RequirePackage{enumitem}
+\setlist{itemsep=2pt, topsep=6pt}
+
+\renewcommand{\arraystretch}{1.2}
+
+\newcommand{\ii}{\item}
+\newcommand{\trans}{%
+  ^{\mathsf{T}}%
+}
+\newcommand{\eps}{\varepsilon}
+
+\endinput
