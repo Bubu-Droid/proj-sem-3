@@ -53,7 +53,12 @@ This prints **1018 6859** (CT scans, annotations). The annotation database ships
 
 ### 0.3 R environment
 
-Step 3 (`R/01_clean.R`) needs only base R. Install the rest before Step 4:
+Steps 2–3 (`R/01_clean.R`, `R/check_data.R`, `R/eda.R`) need only base R. Install the rest before Step 4. Some dependencies of `ordinal` and `car` compile Fortran, so install a Fortran compiler first:
+
+```bash
+sudo pacman -S gcc-fortran
+```
+
 
 ```r
 install.packages(c("ordinal", "brant", "ordinalNet", "car",

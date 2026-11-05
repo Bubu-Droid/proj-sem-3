@@ -358,10 +358,14 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="
 annotation database ships inside the package, so no DICOM download is
 needed for anything in this project.</p>
 <h3 id="03-r-environment">0.3 R environment</h3>
-<p>Step 3 (<code>R/01_clean.R</code>) needs only base R. Install the
-rest before Step 4:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">&quot;ordinal&quot;</span>, <span class="st">&quot;brant&quot;</span>, <span class="st">&quot;ordinalNet&quot;</span>, <span class="st">&quot;car&quot;</span>,</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;ggplot2&quot;</span>, <span class="st">&quot;corrplot&quot;</span>, <span class="st">&quot;xtable&quot;</span>))</span></code></pre></div>
+<p>Steps 2–3 (<code>R/01_clean.R</code>, <code>R/check_data.R</code>,
+<code>R/eda.R</code>) need only base R. Install the rest before Step 4.
+Some dependencies of <code>ordinal</code> and <code>car</code> compile
+Fortran, so install a Fortran compiler first:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> pacman <span class="at">-S</span> gcc-fortran</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">&quot;ordinal&quot;</span>, <span class="st">&quot;brant&quot;</span>, <span class="st">&quot;ordinalNet&quot;</span>, <span class="st">&quot;car&quot;</span>,</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;ggplot2&quot;</span>, <span class="st">&quot;corrplot&quot;</span>, <span class="st">&quot;xtable&quot;</span>))</span></code></pre></div>
 <p>☐ <code>pylidc</code> returns 1018 scans and 6859 annotations; all R
 packages load.</p>
 <hr />
@@ -465,8 +469,8 @@ nodule is your unit of analysis.</strong></li>
 annotations.</p>
 <h3 id="22-extraction-script-pythonextractpy">2.2 Extraction script
 (<code>python/extract.py</code>)</h3>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python python/extract.py</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python python/extract.py</span></code></pre></div>
 <p>Writes <code>data/raw/annotations.csv</code>, the <strong>master
 file</strong>, with one row per <strong>annotation</strong>. It carries
 patient, scan and nodule IDs so you can aggregate later. Run it once (it
@@ -546,8 +550,8 @@ counts for the report's Data section.</p>
 <h2
 id="step-3--cleaning-and-building-the-nodule-level-table-week-2">Step 3
 — Cleaning and building the nodule-level table (Week 2)</h2>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> R/01_clean.R</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> R/01_clean.R</span></code></pre></div>
 <p>Base R only. Writes to <code>data/processed/</code>:</p>
 <table>
 <thead>
@@ -694,19 +698,19 @@ keep <strong>one size variable</strong>. Prefer the one with the best
 univariate fit, or log-volume for interpretability.</li>
 </ul>
 <h3 id="52-criterion-based-selection">5.2 Criterion-based selection</h3>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>full <span class="ot">&lt;-</span> <span class="fu">polr</span>(mal_median <span class="sc">~</span> ., <span class="at">data =</span> train_screened, <span class="at">Hess =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>sel_aic <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(full, <span class="at">direction =</span> <span class="st">&quot;both&quot;</span>, <span class="at">k =</span> <span class="dv">2</span>,              <span class="at">trace =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>sel_bic <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(full, <span class="at">direction =</span> <span class="st">&quot;both&quot;</span>, <span class="at">k =</span> <span class="fu">log</span>(<span class="fu">nrow</span>(train_screened)), <span class="at">trace =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>full <span class="ot">&lt;-</span> <span class="fu">polr</span>(mal_median <span class="sc">~</span> ., <span class="at">data =</span> train_screened, <span class="at">Hess =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>sel_aic <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(full, <span class="at">direction =</span> <span class="st">&quot;both&quot;</span>, <span class="at">k =</span> <span class="dv">2</span>,              <span class="at">trace =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>sel_bic <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(full, <span class="at">direction =</span> <span class="st">&quot;both&quot;</span>, <span class="at">k =</span> <span class="fu">log</span>(<span class="fu">nrow</span>(train_screened)), <span class="at">trace =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <h3 id="53-shrinkage">5.3 Shrinkage</h3>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ordinalNet)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>fit_lasso <span class="ot">&lt;-</span> <span class="fu">ordinalNet</span>(<span class="fu">as.matrix</span>(X_train), y_train,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">family =</span> <span class="st">&quot;cumulative&quot;</span>, <span class="at">link =</span> <span class="st">&quot;logit&quot;</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">parallelTerms =</span> <span class="cn">TRUE</span>, <span class="at">nonparallelTerms =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">alpha =</span> <span class="dv">1</span>)                 <span class="co"># alpha = 0 for ridge</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>cv <span class="ot">&lt;-</span> <span class="fu">ordinalNetCV</span>(<span class="fu">as.matrix</span>(X_train), y_train, <span class="at">family =</span> <span class="st">&quot;cumulative&quot;</span>,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">link =</span> <span class="st">&quot;logit&quot;</span>, <span class="at">parallelTerms =</span> <span class="cn">TRUE</span>, <span class="at">nonparallelTerms =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">alpha =</span> <span class="dv">1</span>, <span class="at">tuneMethod =</span> <span class="st">&quot;cvLoglik&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ordinalNet)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>fit_lasso <span class="ot">&lt;-</span> <span class="fu">ordinalNet</span>(<span class="fu">as.matrix</span>(X_train), y_train,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">family =</span> <span class="st">&quot;cumulative&quot;</span>, <span class="at">link =</span> <span class="st">&quot;logit&quot;</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">parallelTerms =</span> <span class="cn">TRUE</span>, <span class="at">nonparallelTerms =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">alpha =</span> <span class="dv">1</span>)                 <span class="co"># alpha = 0 for ridge</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>cv <span class="ot">&lt;-</span> <span class="fu">ordinalNetCV</span>(<span class="fu">as.matrix</span>(X_train), y_train, <span class="at">family =</span> <span class="st">&quot;cumulative&quot;</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">link =</span> <span class="st">&quot;logit&quot;</span>, <span class="at">parallelTerms =</span> <span class="cn">TRUE</span>, <span class="at">nonparallelTerms =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">alpha =</span> <span class="dv">1</span>, <span class="at">tuneMethod =</span> <span class="st">&quot;cvLoglik&quot;</span>)</span></code></pre></div>
 <p>Plot the Lasso coefficient path vs λ (appendix figure).</p>
 <h3 id="54-decide">5.4 Decide</h3>
 <p>Compare the variable sets from AIC, BIC and Lasso. Choose the final
@@ -725,11 +729,11 @@ proportional odds model (Week 3)</h2>
 <p>Script: <code>R/04_polr.R</code>. Topic 2. This is the baseline the
 EM model will be compared against.</p>
 <h3 id="61-fit">6.1 Fit</h3>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>m_naive <span class="ot">&lt;-</span> <span class="fu">polr</span>(mal_median <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3, <span class="at">data =</span> train, <span class="at">Hess =</span> <span class="cn">TRUE</span>, <span class="at">method =</span> <span class="st">&quot;logistic&quot;</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m_naive)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(<span class="fu">coef</span>(m_naive))           <span class="co"># odds ratios</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(<span class="fu">confint</span>(m_naive))        <span class="co"># profile-likelihood CIs</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>m_naive <span class="ot">&lt;-</span> <span class="fu">polr</span>(mal_median <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3, <span class="at">data =</span> train, <span class="at">Hess =</span> <span class="cn">TRUE</span>, <span class="at">method =</span> <span class="st">&quot;logistic&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m_naive)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(<span class="fu">coef</span>(m_naive))           <span class="co"># odds ratios</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(<span class="fu">confint</span>(m_naive))        <span class="co"># profile-likelihood CIs</span></span></code></pre></div>
 <p>Model: <span class="math inline">\(\operatorname{logit} P(Y \le k
 \mid x) = \alpha_k - x^\top\beta\)</span>, <span class="math inline">\(k
 = 1,\dots,4\)</span>.</p>
@@ -797,42 +801,42 @@ class="math inline">\(\theta^{(t)}\)</span> by Jensen / Gibbs'
 inequality.</li>
 </ol>
 <h3 id="73-implementation">7.3 Implementation</h3>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>logsumexp <span class="ot">&lt;-</span> <span class="cf">function</span>(M) {             <span class="co"># row-wise log-sum-exp</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">apply</span>(M, <span class="dv">1</span>, max)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  m <span class="sc">+</span> <span class="fu">log</span>(<span class="fu">rowSums</span>(<span class="fu">exp</span>(M <span class="sc">-</span> m)))</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>em_dawid_skene_polr <span class="ot">&lt;-</span> <span class="cf">function</span>(X, C, <span class="at">K =</span> <span class="dv">5</span>, w_init, <span class="at">max_iter =</span> <span class="dv">500</span>, <span class="at">tol =</span> <span class="dv">1</span>e<span class="sc">-</span><span class="dv">8</span>) {</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(X); w <span class="ot">&lt;-</span> w_init; ll_trace <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">0</span>)</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(X)</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  long <span class="ot">&lt;-</span> X[<span class="fu">rep</span>(<span class="fu">seq_len</span>(n), <span class="at">times =</span> K), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  long<span class="sc">$</span>z <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(<span class="fu">seq_len</span>(K), <span class="at">each =</span> n), <span class="at">levels =</span> <span class="fu">seq_len</span>(K), <span class="at">ordered =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_len</span>(max_iter)) {</span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- M-step: confusion matrix (closed form) ----</span></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    num <span class="ot">&lt;-</span> <span class="fu">t</span>(w) <span class="sc">%*%</span> C                              <span class="co"># K x K</span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    Pi  <span class="ot">&lt;-</span> num <span class="sc">/</span> <span class="fu">rowSums</span>(num)</span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    Pi  <span class="ot">&lt;-</span> <span class="fu">pmax</span>(Pi, <span class="dv">1</span>e<span class="sc">-</span><span class="dv">10</span>); Pi <span class="ot">&lt;-</span> Pi <span class="sc">/</span> <span class="fu">rowSums</span>(Pi)</span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- M-step: weighted proportional-odds fit ----</span></span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    long<span class="sc">$</span>wt <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(w)</span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    keep <span class="ot">&lt;-</span> long<span class="sc">$</span>wt <span class="sc">&gt;</span> <span class="dv">1</span>e<span class="sc">-</span><span class="dv">8</span></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">polr</span>(z <span class="sc">~</span> . <span class="sc">-</span> wt, <span class="at">data =</span> long[keep, ], <span class="at">weights =</span> wt, <span class="at">Hess =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- E-step ----</span></span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    P    <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> X, <span class="at">type =</span> <span class="st">&quot;probs&quot;</span>)          <span class="co"># n x K prior</span></span>
-<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    logW <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="fu">pmax</span>(P, <span class="dv">1</span>e<span class="sc">-</span><span class="dv">300</span>)) <span class="sc">+</span> C <span class="sc">%*%</span> <span class="fu">t</span>(<span class="fu">log</span>(Pi))            <span class="co"># n x K</span></span>
-<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    lse  <span class="ot">&lt;-</span> <span class="fu">logsumexp</span>(logW)</span>
-<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    w    <span class="ot">&lt;-</span> <span class="fu">exp</span>(logW <span class="sc">-</span> lse)</span>
-<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- convergence ----</span></span>
-<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>    ll_trace <span class="ot">&lt;-</span> <span class="fu">c</span>(ll_trace, <span class="fu">sum</span>(lse))              <span class="co"># observed-data log-lik</span></span>
-<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (t <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span> <span class="fu">abs</span>(<span class="fu">diff</span>(<span class="fu">tail</span>(ll_trace, <span class="dv">2</span>))) <span class="sc">&lt;</span> tol <span class="sc">*</span> <span class="fu">abs</span>(<span class="fu">tail</span>(ll_trace, <span class="dv">1</span>))) <span class="cf">break</span></span>
-<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">Pi =</span> Pi, <span class="at">w =</span> w, <span class="at">loglik =</span> <span class="fu">tail</span>(ll_trace, <span class="dv">1</span>), <span class="at">trace =</span> ll_trace)</span>
-<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>logsumexp <span class="ot">&lt;-</span> <span class="cf">function</span>(M) {             <span class="co"># row-wise log-sum-exp</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">apply</span>(M, <span class="dv">1</span>, max)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  m <span class="sc">+</span> <span class="fu">log</span>(<span class="fu">rowSums</span>(<span class="fu">exp</span>(M <span class="sc">-</span> m)))</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>em_dawid_skene_polr <span class="ot">&lt;-</span> <span class="cf">function</span>(X, C, <span class="at">K =</span> <span class="dv">5</span>, w_init, <span class="at">max_iter =</span> <span class="dv">500</span>, <span class="at">tol =</span> <span class="dv">1</span>e<span class="sc">-</span><span class="dv">8</span>) {</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(X); w <span class="ot">&lt;-</span> w_init; ll_trace <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">0</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(X)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  long <span class="ot">&lt;-</span> X[<span class="fu">rep</span>(<span class="fu">seq_len</span>(n), <span class="at">times =</span> K), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  long<span class="sc">$</span>z <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(<span class="fu">seq_len</span>(K), <span class="at">each =</span> n), <span class="at">levels =</span> <span class="fu">seq_len</span>(K), <span class="at">ordered =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_len</span>(max_iter)) {</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- M-step: confusion matrix (closed form) ----</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    num <span class="ot">&lt;-</span> <span class="fu">t</span>(w) <span class="sc">%*%</span> C                              <span class="co"># K x K</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    Pi  <span class="ot">&lt;-</span> num <span class="sc">/</span> <span class="fu">rowSums</span>(num)</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    Pi  <span class="ot">&lt;-</span> <span class="fu">pmax</span>(Pi, <span class="dv">1</span>e<span class="sc">-</span><span class="dv">10</span>); Pi <span class="ot">&lt;-</span> Pi <span class="sc">/</span> <span class="fu">rowSums</span>(Pi)</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- M-step: weighted proportional-odds fit ----</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    long<span class="sc">$</span>wt <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(w)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    keep <span class="ot">&lt;-</span> long<span class="sc">$</span>wt <span class="sc">&gt;</span> <span class="dv">1</span>e<span class="sc">-</span><span class="dv">8</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">polr</span>(z <span class="sc">~</span> . <span class="sc">-</span> wt, <span class="at">data =</span> long[keep, ], <span class="at">weights =</span> wt, <span class="at">Hess =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- E-step ----</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    P    <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> X, <span class="at">type =</span> <span class="st">&quot;probs&quot;</span>)          <span class="co"># n x K prior</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    logW <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="fu">pmax</span>(P, <span class="dv">1</span>e<span class="sc">-</span><span class="dv">300</span>)) <span class="sc">+</span> C <span class="sc">%*%</span> <span class="fu">t</span>(<span class="fu">log</span>(Pi))            <span class="co"># n x K</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    lse  <span class="ot">&lt;-</span> <span class="fu">logsumexp</span>(logW)</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    w    <span class="ot">&lt;-</span> <span class="fu">exp</span>(logW <span class="sc">-</span> lse)</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- convergence ----</span></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>    ll_trace <span class="ot">&lt;-</span> <span class="fu">c</span>(ll_trace, <span class="fu">sum</span>(lse))              <span class="co"># observed-data log-lik</span></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (t <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span> <span class="fu">abs</span>(<span class="fu">diff</span>(<span class="fu">tail</span>(ll_trace, <span class="dv">2</span>))) <span class="sc">&lt;</span> tol <span class="sc">*</span> <span class="fu">abs</span>(<span class="fu">tail</span>(ll_trace, <span class="dv">1</span>))) <span class="cf">break</span></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">Pi =</span> Pi, <span class="at">w =</span> w, <span class="at">loglik =</span> <span class="fu">tail</span>(ll_trace, <span class="dv">1</span>), <span class="at">trace =</span> ll_trace)</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Notes:</p>
 <ul>
 <li><strong>Initialisation:</strong> <code>w_init[i, k] = 1</code> if
@@ -924,9 +928,9 @@ Diagnostics and hypothesis tests (Week 6)</h2>
 assumption</h3>
 <ul>
 <li><p><strong>Brant test</strong> (a Wald test) on the naive model:</p>
-<div class="sourceCode" id="cb10"><pre
-class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brant)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">brant</span>(m_naive)          <span class="co"># omnibus + per-variable chi-square tests</span></span></code></pre></div></li>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brant)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">brant</span>(m_naive)          <span class="co"># omnibus + per-variable chi-square tests</span></span></code></pre></div></li>
 <li><p><strong>Likelihood-ratio alternative:</strong> fit with
 <code>ordinal::clm</code> and run <code>nominal_test(model)</code>,
 which compares the PO model with a partial PO model that frees each
@@ -1025,12 +1029,12 @@ a public-health setting such as Indian hospitals is untested.</li>
 <p><code>report/report.tex</code>. <strong>Max 5 pages, double-spaced,
 A4.</strong> Appendix does not count.</p>
 <h3 id="121-preamble">12.1 Preamble</h3>
-<div class="sourceCode" id="cb11"><pre
-class="sourceCode latex"><code class="sourceCode latex"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">\documentclass</span>[11pt]{<span class="ex">article</span>}</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[a4paper, margin=2.5cm]{<span class="ex">geometry</span>}</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">setspace</span>}<span class="fu">\doublespacing</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">amsmath, amssymb, booktabs, graphicx, hyperref</span>}</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[style=authoryear]{<span class="ex">biblatex</span>}<span class="fu">\addbibresource</span>{refs.bib}</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode latex"><code class="sourceCode latex"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="bu">\documentclass</span>[11pt]{<span class="ex">article</span>}</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[a4paper, margin=2.5cm]{<span class="ex">geometry</span>}</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">setspace</span>}<span class="fu">\doublespacing</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">amsmath, amssymb, booktabs, graphicx, hyperref</span>}</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[style=authoryear]{<span class="ex">biblatex</span>}<span class="fu">\addbibresource</span>{refs.bib}</span></code></pre></div>
 <h3 id="122-main-text--page-budget">12.2 Main text (≈ page budget)</h3>
 <ol type="1">
 <li><strong>Introduction and research questions</strong> (0.5 p).
