@@ -9,6 +9,7 @@ Run from the repository root:
     uv run python python/extract.py
 """
 
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -43,15 +44,21 @@ def shape_features(ann, scan):
         if ev[0] > 0:
             out["elongation"] = np.sqrt(max(ev[1], 0) / ev[0])
             out["flatness"] = np.sqrt(max(ev[2], 0) / ev[0])
-    # Convex hull measured in voxels, so solidity is in (0, 1]. A nodule drawn
-    # on a single slice is flat in 3D, so take its 2D hull instead.
-    try:
-        hull = (convex_hull_image(mask[:, :, 0])[:, :, None]
-                if mask.shape[2] == 1 else convex_hull_image(mask))
-        out["convex_volume"] = hull.sum() * np.prod(sp)
-        out["solidity"] = mask.sum() / hull.sum()
-    except (QhullError, ValueError):                 # degenerate (e.g. a line)
-        pass
+    # Convex hull measured in voxels, so solidity is in (0, 1]. A mask one voxel
+    # thick along some axis (e.g. a nodule drawn on a single slice) is flat, so
+    # take the hull in the remaining axes. Other flat masks give an empty hull.
+    flat = np.squeeze(mask)
+    if flat.ndim >= 2:
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")      # Qhull's degenerate-input noise
+                hull = convex_hull_image(flat)
+        except (QhullError, ValueError):
+            hull = None
+        if hull is not None and hull.any():
+            hull |= flat                             # guarantee solidity <= 1
+            out["convex_volume"] = hull.sum() * np.prod(sp)
+            out["solidity"] = flat.sum() / hull.sum()
     return out
 
 
