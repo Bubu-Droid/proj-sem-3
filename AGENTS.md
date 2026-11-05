@@ -4,6 +4,9 @@ Statistics course project: proportional-odds and EM (Dawid–Skene) modelling of
 LIDC-IDRI lung-nodule malignancy ratings. `PLAN.md` is the brief, `STEPS.md`
 the step-by-step walkthrough (`STEPS.html` is generated from it).
 
+Keep this file current: when you change the pipeline, dependencies or data
+conventions, update it in the same commit.
+
 ## Environment
 
 - Python is managed with **uv** only (`uv add`, `uv run`); never `pip install`.
