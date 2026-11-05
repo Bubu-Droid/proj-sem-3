@@ -1,0 +1,48 @@
+# AGENTS.md
+
+Statistics course project: proportional-odds and EM (Dawid–Skene) modelling of
+LIDC-IDRI lung-nodule malignancy ratings. `PLAN.md` is the brief, `STEPS.md`
+the step-by-step walkthrough (`STEPS.html` is generated from it).
+
+## Environment
+
+- Python is managed with **uv** only (`uv add`, `uv run`); never `pip install`.
+- Python is pinned to 3.11 with `numpy<1.24`, `sqlalchemy<2.0`,
+  `setuptools<80` (and matching pandas/scipy/scikit-image) because pylidc
+  0.2.3 needs `pkg_resources` and the old NumPy/SQLAlchemy APIs. Don't lift
+  these pins.
+- Python is used only for extraction (`python/`); all statistics are in R
+  (`R/`). Run R scripts from the repo root: `Rscript R/<script>.R`.
+
+## Pipeline
+
+```bash
+uv run python python/extract.py   # -> data/raw/annotations.csv (slow; run once)
+Rscript R/01_clean.R              # -> data/processed/*.csv
+```
+
+`data/raw/annotations.csv` is the master file and is never edited by hand.
+
+## Data conventions
+
+- Unit of analysis is the **nodule** (`nodule_id` = `<scan_id>_<cluster>`),
+  not the annotation. Train/test split is by **patient**.
+- `reader_slot` / `R1..R4` order is arbitrary: LIDC reader identities are not
+  consistent across scans.
+- `calcification` and `internalStructure` are nominal and excluded from
+  modelling; they stay in `annotations.csv` and `nodules.csv` only.
+- `mal_median` rounds half-grade medians **up**; `mal_median_tie` flags them.
+- Processed CSVs hold unstandardised values; standardise in the modelling
+  script using training-set means/SDs.
+
+## Git
+
+Conventional Commits (`feat`, `fix`, `docs`, `build`, `chore`, `refactor`,
+with an optional scope such as `feat(clean):`).
+
+After editing `STEPS.md`, regenerate the HTML:
+
+```bash
+pandoc STEPS.md -f gfm+tex_math_dollars -s --toc --toc-depth=2 \
+  --math-method=mathjax --metadata pagetitle="Project Walkthrough" -o STEPS.html
+```
