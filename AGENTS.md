@@ -43,10 +43,11 @@ cd core && latexmk -pdf -shell-escape main.tex
 ```
 
 The user's global latexmkrc puts aux files in `core/buildtmp/` (ignored).
-`core/main.pdf` is committed. Numbers in `main.tex` are typed in by hand from `R/eda.R` and `R/01_clean.R`
-output, so update them when the data or scripts change. Main text must be
-double-spaced A4; `\doublespacing` comes after `\makecontents` so the title
-page stays on one page.
+`core/main.pdf` is committed. Numbers in `main.tex` are typed in by hand
+from `R/eda.R` and `R/01_clean.R` output, so update them when the data or scripts change. Do not double-space:
+keep the style's default one-and-a-half spacing. Author, roll number
+(`\rollno`) and date are placeholders in `main.tex`; never hard-code personal
+details in `statproj.sty`.
 
 ## Data conventions
 
