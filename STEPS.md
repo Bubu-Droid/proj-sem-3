@@ -5,7 +5,7 @@ A step-by-step guide from an empty folder to the final defense. Read alongside `
 Conventions used below:
 
 - **Python** is used only for data extraction (`pylidc` is Python-only).
-- **R** is used for all statistics (`MASS::polr`, `ordinal`, `brant`, `ordinalNet` are mature and accept case weights, which the EM M-step needs).
+- **R** is used for all statistics (`MASS::polr`, `ordinal`, `brant` are mature and accept case weights, which the EM M-step needs).
 - `☐` marks a concrete deliverable that should exist before you move on.
 
 ---
@@ -23,19 +23,26 @@ proj-sem-3/
 │   └── processed/      # nodule-level analysis tables
 ├── python/
 │   └── extract.py
-├── R/
-│   ├── 01_clean.R
-│   ├── 02_screen.R
-│   ├── 03_select.R
-│   ├── 04_polr.R
-│   ├── 05_em.R
-│   ├── 06_tests.R
-│   ├── 07_simulation.R
-│   └── 08_figures.R
-├── figures/
-├── report/
-│   ├── report.tex
-│   └── refs.bib
+├── main.tex
+├── main.pdf
+├── refs.bib
+├── statproj.sty
+├── isilogo.png
+├── codes/
+│   ├── compileplots.sh
+│   ├── r-codes/
+│   │   ├── clean-data.R
+│   │   ├── check-data.R
+│   │   ├── summary-cohort.R
+│   │   ├── summary-all.R
+│   │   ├── summary-grades.R
+│   │   ├── eda-summary.R
+│   │   ├── polr-fit.R
+│   │   ├── em-fit.R
+│   │   ├── hypo-test.R
+│   │   └── simulation.R
+│   └── plots/
+│       └── eda/        # one .R and one .pdf per figure
 └── slides/
     └── slides.tex
 ```
@@ -53,7 +60,7 @@ This prints **1018 6859** (CT scans, annotations). The annotation database ships
 
 ### 0.3 R environment
 
-Steps 2–3 (`R/01_clean.R`, `R/check_data.R`, `R/eda.R`) need only base R. Install the rest before Step 4. Some dependencies of `ordinal` and `car` compile Fortran, so install a Fortran compiler first:
+Steps 2–3 (`clean-data.R`, `check-data.R`, `eda-summary.R`) need only base R. Install the rest before Step 4. Some dependencies of `ordinal` compile Fortran, so install a Fortran compiler first:
 
 ```bash
 sudo pacman -S gcc-fortran
@@ -61,7 +68,7 @@ sudo pacman -S gcc-fortran
 
 
 ```r
-install.packages(c("ordinal", "brant", "ordinalNet", "car",
+install.packages(c("ordinal", "brant",
                    "ggplot2", "corrplot", "xtable"))
 ```
 
@@ -76,8 +83,6 @@ Do this before writing any modelling code. Each item maps to a part of the repor
 | Topic                   | What you must be able to do                                                                                                                                                              | Source                                                                          |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | Proportional odds model | Write the cumulative logit model, explain it as a latent $Y^* = x^\top\beta + \varepsilon$ with logistic $\varepsilon$ and thresholds $\alpha_k$, interpret $e^{\beta}$ as an odds ratio | Agresti, *Categorical Data Analysis*, ch. on ordinal models (Topic 2 notes)     |
-| Benjamini–Hochberg      | State the procedure, know it controls FDR under independence / positive dependence (PRDS), know Benjamini–Yekutieli for arbitrary dependence                                             | Topic 11 notes; Benjamini & Hochberg (1995)                                     |
-| AIC/BIC, Lasso          | Know when each is appropriate and why post-selection p-values are optimistic                                                                                                             | Topic 9 notes; ESL ch. 3                                                        |
 | Brant test              | It is a **Wald** test comparing separate binary-logit fits at each threshold; know the alternative LR test of partial proportional odds (`ordinal::nominal_test`)                        | Brant (1990), *Biometrics* 46(4)                                                |
 | Wilks' theorem / LRT    | $-2\log\Lambda \to \chi^2_{df}$ under $H_0$; regularity conditions; nested models only                                                                                                   | Casella & Berger, ch. 10                                                        |
 | EM algorithm            | Derive the Q-function, prove monotonicity via Jensen/KL, know local-maximum and slow-convergence issues                                                                                  | McLachlan & Krishnan ch. 1–4; Wasserman, *All of Statistics*                    |
@@ -133,7 +138,7 @@ Without the DICOM images you **cannot** compute intensity-based radiomic texture
 1. contour-derived geometry (≈ 10–15 features from 2.2), and
 2. the radiologists' semantic ratings (8 features).
 
-That is enough for BH screening to be meaningful but not "dozens of texture features". State this honestly in the report. (Optional extension: download the DICOMs for a subset and run `pyradiomics`. Skip unless you have spare time.)
+That is not "dozens of texture features". State this honestly in the report. (Optional extension: download the DICOMs for a subset and run `pyradiomics`. Skip unless you have spare time.)
 
 ☐ `data/raw/annotations.csv` exists; a short table of counts for the report's Data section.
 
@@ -142,7 +147,7 @@ That is enough for BH screening to be meaningful but not "dozens of texture feat
 ## Step 3 — Cleaning and building the nodule-level table (Week 2)
 
 ```bash
-Rscript R/01_clean.R
+Rscript codes/r-codes/clean-data.R
 ```
 
 Base R only. Writes to `data/processed/`:
@@ -188,7 +193,7 @@ Also store the count matrix `C` (n × 5) as columns `C1..C5`: `C[i, r]` = number
 
 Split at the **patient** level (70/30, seed `20261105`), not the nodule level, so nodules from one patient never appear in both sets. The assignment is the `split` column of `nodules.csv`.
 
-**All screening and selection (Steps 4–5) uses the training set only.** The test set is touched once, in Step 10.
+**All model fitting uses the training set only.** The test set is touched once, in Step 8.
 
 ### 3.6 Exploratory analysis
 
@@ -197,75 +202,15 @@ Split at the **patient** level (70/30, seed `20261105`), not the nodule level, s
 - Correlation heatmap of predictors (expect diameter, log-volume, log-surface-area to be ≈ 0.9+ correlated).
 - **Inter-reader agreement:** proportion of nodules where readers disagree; Fleiss' κ or the distribution of (max − min) rating per nodule. This motivates the EM model.
 
-☐ `data/processed/nodules_train.csv`, `nodules_test.csv`; 3–4 EDA figures in `figures/`.
+☐ `data/processed/nodules_train.csv`, `nodules_test.csv`; 3–4 EDA figures in `codes/plots/eda/`.
 
 ---
 
-## Step 4 — Feature screening with Benjamini–Hochberg (Week 2)
+## Step 4 — Naive proportional odds model (Week 3)
 
-Script: `R/02_screen.R`. Topic 11.
+Script: `codes/r-codes/polr-fit.R`. Topic 2. This is the baseline the EM model will be compared against.
 
-1. For each candidate feature $X_j$, test $H_{0j}$: no association with malignancy. Use a **univariate proportional odds LRT**: fit `polr(mal_median ~ X_j)` vs the intercept-only model, $-2\log\Lambda \sim \chi^2_1$. (A Spearman correlation test is a simpler alternative.)
-2. Collect the $m$ p-values, sort them $p_{(1)} \le \dots \le p_{(m)}$.
-3. BH at $q = 0.05$: find the largest $k$ with $p_{(k)} \le \frac{k}{m}q$; reject $H_{0(1)},\dots,H_{0(k)}$.
-   In R: `p.adjust(p, method = "BH") < 0.05`.
-4. Because features are strongly correlated, also report Benjamini–Yekutieli (`method = "BY"`), which is valid under arbitrary dependence, and Bonferroni for contrast.
-5. Report a table: feature, test statistic, raw p, BH-adjusted p, BY-adjusted p, selected (Y/N).
-
-Note for the report: screening uses `mal_median`, i.e. the naive response, before the EM model exists. That is acceptable as a screening step; say so.
-
-☐ Screening table (appendix); list of features that survive.
-
----
-
-## Step 5 — Variable selection and final design matrix (Week 3)
-
-Script: `R/03_select.R`. Topic 9.
-
-### 5.1 Collinearity
-
-- Compute VIFs (`car::vif` on a linear model of the same predictors, as a diagnostic).
-- Among near-duplicates (diameter / log-volume / log-surface-area), keep **one size variable**. Prefer the one with the best univariate fit, or log-volume for interpretability.
-
-### 5.2 Criterion-based selection
-
-```r
-library(MASS)
-full <- polr(mal_median ~ ., data = train_screened, Hess = TRUE)
-sel_aic <- stepAIC(full, direction = "both", k = 2,              trace = FALSE)
-sel_bic <- stepAIC(full, direction = "both", k = log(nrow(train_screened)), trace = FALSE)
-```
-
-### 5.3 Shrinkage
-
-```r
-library(ordinalNet)
-fit_lasso <- ordinalNet(as.matrix(X_train), y_train,
-                        family = "cumulative", link = "logit",
-                        parallelTerms = TRUE, nonparallelTerms = FALSE,
-                        alpha = 1)                 # alpha = 0 for ridge
-cv <- ordinalNetCV(as.matrix(X_train), y_train, family = "cumulative",
-                   link = "logit", parallelTerms = TRUE, nonparallelTerms = FALSE,
-                   alpha = 1, tuneMethod = "cvLoglik")
-```
-
-Plot the Lasso coefficient path vs λ (appendix figure).
-
-### 5.4 Decide
-
-Compare the variable sets from AIC, BIC and Lasso. Choose the final set (BIC or Lasso-1SE usually gives the most parsimonious one) and **justify it in one paragraph**. Aim for roughly 3–6 predictors.
-
-Caveat for the report: p-values from Step 6 onwards are computed on the same training data used for selection, so they are optimistic (post-selection inference). Mention it; optionally re-fit on a held-out half of the training data to check stability.
-
-☐ Final predictor list; table comparing AIC/BIC/Lasso selections; Lasso path figure.
-
----
-
-## Step 6 — Naive proportional odds model (Week 3)
-
-Script: `R/04_polr.R`. Topic 2. This is the baseline the EM model will be compared against.
-
-### 6.1 Fit
+### 4.1 Fit
 
 ```r
 library(MASS)
@@ -277,16 +222,16 @@ exp(confint(m_naive))        # profile-likelihood CIs
 
 Model: $\operatorname{logit} P(Y \le k \mid x) = \alpha_k - x^\top\beta$, $k = 1,\dots,4$.
 
-### 6.2 Interpret
+### 4.2 Interpret
 
 For a one-SD increase in $x_j$, the odds of being in a **higher** malignancy category (vs. at or below any given threshold) multiply by $e^{\beta_j}$, the same factor at every threshold. Note R's `polr` sign convention ($\alpha_k - x^\top\beta$), so positive $\beta$ means higher malignancy.
 
-### 6.3 Figures
+### 4.3 Figures
 
-- Predicted category probabilities $P(Y = k \mid x)$ vs. the size variable, with other predictors at their mean: five curves, one per category.
+- Predicted category probabilities $P(Y = k \mid x)$ vs. a size variable, with other predictors at their mean: five curves, one per category.
 - Odds-ratio forest plot with 95% CIs.
 
-### 6.4 Secondary model
+### 4.4 Secondary model
 
 Repeat with semantic features added; report the comparison in one table.
 
@@ -294,11 +239,11 @@ Repeat with semantic features added; report the comparison in one table.
 
 ---
 
-## Step 7 — EM latent true-grade model (Weeks 4–5)
+## Step 5 — EM latent true-grade model (Weeks 4–5)
 
-Script: `R/05_em.R`. This is the core of the extension (Phase 4 of `PLAN.md`).
+Script: `codes/r-codes/em-fit.R`. This is the core of the extension (Phase 4 of `PLAN.md`).
 
-### 7.1 The model
+### 5.1 The model
 
 - Latent true grade $Z_i \in \{1,\dots,5\}$ with $P(Z_i \le k \mid x_i) = \operatorname{logit}^{-1}(\alpha_k - x_i^\top\beta)$.
 - Reader ratings: $P(R_{ij} = r \mid Z_i = k) = \pi_{kr}$, one shared $5\times5$ matrix, rows summing to 1.
@@ -307,14 +252,14 @@ Script: `R/05_em.R`. This is the core of the extension (Phase 4 of `PLAN.md`).
   $$\ell(\theta) = \sum_i \log \sum_{k=1}^5 p_{ik}(\alpha,\beta) \prod_{r=1}^5 \pi_{kr}^{C_{ir}}$$
   where $p_{ik} = P(Z_i = k \mid x_i)$ and $C_{ir}$ is the count matrix from Step 3.3.
 
-### 7.2 Write the derivation first (on paper, then into the appendix)
+### 5.2 Write the derivation first (on paper, then into the appendix)
 
 1. Complete-data log-likelihood: $\ell_c = \sum_i \sum_k \mathbb{1}\{Z_i=k\}\left[\log p_{ik} + \sum_r C_{ir}\log\pi_{kr}\right]$.
 2. Q-function: replace $\mathbb{1}\{Z_i=k\}$ by $w_{ik} = P(Z_i = k \mid R_i, x_i; \theta^{(t)})$.
 3. Q separates into a $\pi$ part (closed-form maximiser) and an $(\alpha,\beta)$ part (a weighted ordinal likelihood).
 4. Monotonicity proof: $\ell(\theta) = Q(\theta\mid\theta^{(t)}) - H(\theta\mid\theta^{(t)})$, and $H$ is maximised at $\theta^{(t)}$ by Jensen / Gibbs' inequality.
 
-### 7.3 Implementation
+### 5.3 Implementation
 
 ```r
 library(MASS)
@@ -363,7 +308,7 @@ Notes:
 - **If $\hat\pi$ is unstable** (rows for rare categories estimated from very few nodules): constrain it to be banded ($\pi_{kr} = 0$ for $|k - r| > 2$) or use the one-coin model ($\pi_{kk} = p$, off-diagonals equal).
 - `polr` may warn about non-integer weights; that is harmless here. You can also use `ordinal::clm` with `weights =`.
 
-### 7.4 Standard errors
+### 5.4 Standard errors
 
 Parametric or nonparametric bootstrap at the **patient** level:
 
@@ -373,13 +318,13 @@ Parametric or nonparametric bootstrap at the **patient** level:
 
 (Louis' identity is the analytical alternative; mention it in the theory section even if you use the bootstrap.)
 
-### 7.5 Check with Crowd-Kit (optional but quick)
+### 5.5 Check with Crowd-Kit (optional but quick)
 
 Fit plain Dawid–Skene without covariates (set the structural part to just class proportions) in your code and in Python's `crowd-kit` (`crowdkit.aggregation.DawidSkene`). The posterior class probabilities should agree closely.
 
-### 7.6 Outputs
+### 5.6 Outputs
 
-- Table: $\hat\beta$ (naive, Step 6) vs. $\hat\beta$ (EM), with SEs.
+- Table: $\hat\beta$ (naive, Step 4) vs. $\hat\beta$ (EM), with SEs.
 - Heatmap of $\hat\pi$ (rows = true grade, columns = reported rating).
 - Log-likelihood trace plot.
 - Distribution of posterior entropy of $w_i$: which nodules are "ambiguous".
@@ -388,9 +333,9 @@ Fit plain Dawid–Skene without covariates (set the structural part to just clas
 
 ---
 
-## Step 8 — Simulation study (Week 5)
+## Step 6 — Simulation study (Week 5)
 
-Script: `R/07_simulation.R`. This shows your EM implementation is correct, and it is a strong appendix item.
+Script: `codes/r-codes/simulation.R`. This shows your EM implementation is correct, and it is a strong appendix item.
 
 1. Fix "true" values: $\beta$ and $\alpha$ near your EM estimates, and a realistic $\pi$ (e.g. 0.6 on the diagonal, 0.15 on adjacent cells, the rest small).
 2. Simulate $X$ by resampling rows of the real design matrix, $Z_i$ from the PO model, and 1–4 ratings per nodule from $\pi$ (matching the real distribution of `n_readers`).
@@ -403,11 +348,11 @@ Expected finding: the naive model's $\hat\beta$ is attenuated (biased toward 0) 
 
 ---
 
-## Step 9 — Diagnostics and hypothesis tests (Week 6)
+## Step 7 — Diagnostics and hypothesis tests (Week 6)
 
-Script: `R/06_tests.R`. Phase 5 of `PLAN.md`.
+Script: `codes/r-codes/hypo-test.R`. Phase 5 of `PLAN.md`.
 
-### 9.1 Proportional odds assumption
+### 7.1 Proportional odds assumption
 
 - **Brant test** (a Wald test) on the naive model:
 
@@ -420,7 +365,7 @@ Script: `R/06_tests.R`. Phase 5 of `PLAN.md`.
 - If a variable violates PO, either report it as a limitation or fit a partial PO model for that variable (`clm(..., nominal = ~ x_bad)`).
 - Note: these tests are applied to the naive model; in the EM model PO is assumed for the latent grade.
 
-### 9.2 Likelihood-ratio tests (Wilks)
+### 7.2 Likelihood-ratio tests (Wilks)
 
 For nested models $M_0 \subset M_1$: $\Lambda = -2(\ell_0 - \ell_1) \xrightarrow{d} \chi^2_{df}$, $df$ = difference in number of parameters.
 
@@ -431,16 +376,15 @@ For nested models $M_0 \subset M_1$: $\Lambda = -2(\ell_0 - \ell_1) \xrightarrow
 
 Write a short paragraph linking this to Neyman–Pearson: the LRT is the most powerful test in the simple-vs-simple case, and Wilks gives its asymptotic null distribution in the composite case.
 
-### 9.3 Model fit
+### 7.3 Model fit
 
-- Compare AIC/BIC of naive vs. secondary models.
 - For the EM model, compare against the plain Dawid–Skene model without covariates (LRT: are the features informative about the true grade beyond the readers' ratings?).
 
 ☐ Brant/nominal-test table; LRT table.
 
 ---
 
-## Step 10 — Evaluation on the test set (Week 6)
+## Step 8 — Evaluation on the test set (Week 6)
 
 Touch the test set **once**, after all modelling decisions are frozen.
 
@@ -456,7 +400,7 @@ Touch the test set **once**, after all modelling decisions are frozen.
 
 ---
 
-## Step 11 — Policy interpretation (Week 7)
+## Step 9 — Policy interpretation (Week 7)
 
 Tie the results to the triage recommendation in `PLAN.md`:
 
@@ -468,17 +412,16 @@ Tie the results to the triage recommendation in `PLAN.md`:
 1. LIDC "malignancy" is radiologists' **suspicion**, not pathology-confirmed diagnosis. The model predicts expert opinion, not cancer. (TCIA hosts a diagnosis spreadsheet for a small subset of LIDC patients; mention it as possible external validation.)
 2. No intensity-based radiomics (no DICOM).
 3. Circularity of semantic features.
-4. Post-selection inference.
-5. Conditional-independence assumption of readers in the EM model.
-6. LIDC is a research dataset from a few US centres; generalisation to a public-health setting such as Indian hospitals is untested.
+4. Conditional-independence assumption of readers in the EM model.
+5. LIDC is a research dataset from a few US centres; generalisation to a public-health setting such as Indian hospitals is untested.
 
 ---
 
-## Step 12 — Write the report (Weeks 7–8)
+## Step 10 — Write the report (Weeks 7–8)
 
-`report/report.tex`. **Max 5 pages, double-spaced, A4.** Appendix does not count.
+`main.tex`. **Max 5 pages, double-spaced, A4.** Appendix does not count.
 
-### 12.1 Preamble
+### 10.1 Preamble
 
 ```latex
 \documentclass[11pt]{article}
@@ -488,29 +431,28 @@ Tie the results to the triage recommendation in `PLAN.md`:
 \usepackage[style=authoryear]{biblatex}\addbibresource{refs.bib}
 ```
 
-### 12.2 Main text (≈ page budget)
+### 10.2 Main text (≈ page budget)
 
 1. **Introduction and research questions** (0.5 p). Example RQs:
-   - RQ1: Which geometric nodule features are associated with radiologist-assessed malignancy after FDR control?
+   - RQ1: Which geometric nodule features are associated with radiologist-assessed malignancy?
    - RQ2: Does the proportional-odds model adequately describe that relationship?
    - RQ3: Does accounting for inter-reader disagreement (EM) change the estimated effects?
 2. **Data** (0.75 p): LIDC-IDRI, pylidc, unit of analysis, aggregation, train/test split, counts table.
-3. **Methodology** (1.5 p): BH screening → selection → PO model → EM latent-grade model → Brant/LRT. Equations, not code.
+3. **Methodology** (1.5 p): PO model → EM latent-grade model → Brant/LRT. Equations, not code.
 4. **Results** (1.5 p): one coefficient table (naive vs EM), one key figure (probability curves or $\hat\pi$ heatmap), test results in text.
 5. **Discussion, policy recommendations, limitations** (0.75 p).
 
-### 12.3 Appendix (no page limit)
+### 10.3 Appendix (no page limit)
 
 - A: Full code (use `listings` or `minted`, or `\input` the scripts).
-- B: BH screening table, selection comparison, Lasso path.
-- C: Full coefficient tables, odds-ratio plot, probability curves for each category.
-- D: EM derivation, monotonicity proof, log-likelihood trace.
-- E: Simulation study.
-- F: Brant and LRT tables; calibration plot.
+- B: Full coefficient tables, odds-ratio plot, probability curves for each category.
+- C: EM derivation, monotonicity proof, log-likelihood trace.
+- D: Simulation study.
+- E: Brant and LRT tables; calibration plot.
 
-### 12.4 Bibliography (minimum)
+### 10.4 Bibliography (minimum)
 
-Armato et al. (2011, *Medical Physics*) for LIDC-IDRI; Hancock & Magnan (2016) for pylidc; McCullagh (1980) for PO models; Brant (1990); Benjamini & Hochberg (1995); Dempster, Laird & Rubin (1977); Dawid & Skene (1979); Agresti.
+Armato et al. (2011, *Medical Physics*) for LIDC-IDRI; Hancock & Magnan (2016) for pylidc; McCullagh (1980) for PO models; Brant (1990); Dempster, Laird & Rubin (1977); Dawid & Skene (1979); Agresti.
 
 Compile, check the page count with the appendix excluded, and ask someone outside the group to read it once.
 
@@ -518,29 +460,27 @@ Compile, check the page count with the appendix excluded, and ask someone outsid
 
 ---
 
-## Step 13 — Slides and defense (Week 8)
+## Step 11 — Slides and defense (Week 8)
 
 `slides/slides.tex` (Beamer). **Fewer than 16 slides, 20–25 minutes, 5–7 minutes per member.**
 
-Suggested 15-slide structure and split (assuming 4 members):
+Suggested 13-slide structure and split (assuming 4 members):
 
 | #   | Slide                                                | Speaker |
 | --- | ---------------------------------------------------- | ------- |
 | 1   | Title                                                | A       |
 | 2   | Motivation: nodule triage, reader disagreement       | A       |
 | 3   | Data: LIDC-IDRI, unit of analysis, counts            | A       |
-| 4   | EDA: malignancy distribution, reader disagreement    | A       |
-| 5   | BH screening                                         | B       |
-| 6   | Variable selection (AIC/BIC/Lasso)                   | B       |
-| 7   | Proportional odds model                              | B       |
-| 8   | Naive model results: odds ratios, probability curves | B       |
-| 9   | Why EM: latent true grade                            | C       |
-| 10  | E-step / M-step and monotonicity                     | C       |
-| 11  | EM results: $\hat\pi$ heatmap, $\beta$ comparison    | C       |
-| 12  | Simulation study                                     | C       |
-| 13  | Brant test and LRTs                                  | D       |
-| 14  | Test-set performance and triage rule                 | D       |
-| 15  | Limitations and conclusions                          | D       |
+| 4   | EDA: malignancy distribution, reader disagreement    | B       |
+| 5   | Proportional odds model                              | B       |
+| 6   | Naive model results: odds ratios, probability curves | B       |
+| 7   | Why EM: latent true grade                            | C       |
+| 8   | E-step / M-step and monotonicity                     | C       |
+| 9   | EM results: $\hat\pi$ heatmap, $\beta$ comparison    | C       |
+| 10  | Simulation study                                     | C       |
+| 11  | Brant test and LRTs                                  | D       |
+| 12  | Test-set performance and triage rule                 | D       |
+| 13  | Limitations and conclusions                          | D       |
 
 Preparation:
 
@@ -557,12 +497,12 @@ Preparation:
 | Week | Steps      | Milestone                                                       |
 | ---- | ---------- | --------------------------------------------------------------- |
 | 1    | 0, 1, 2    | Environment works; `annotations.csv` extracted; reading started |
-| 2    | 3, 4       | Nodule-level train/test tables; EDA; BH screening done          |
-| 3    | 5, 6       | Final predictors; naive PO model fitted                         |
-| 4    | 7.1–7.3    | EM derivation written; EM code converging                       |
-| 5    | 7.4–7.6, 8 | Bootstrap SEs; simulation study                                 |
-| 6    | 9, 10      | Diagnostics, LRTs, test-set evaluation                          |
-| 7    | 11, 12     | Policy section; report draft                                    |
-| 8    | 12, 13     | Report final; slides; rehearsals                                |
+| 2    | 3          | Nodule-level train/test tables; EDA                             |
+| 3    | 4          | Naive PO model fitted                                           |
+| 4    | 5.1–5.3    | EM derivation written; EM code converging                       |
+| 5    | 5.4–5.6, 6 | Bootstrap SEs; simulation study                                 |
+| 6    | 7, 8       | Diagnostics, LRTs, test-set evaluation                          |
+| 7    | 9, 10      | Policy section; report draft                                    |
+| 8    | 10, 11     | Report final; slides; rehearsals                                |
 
-**Fallback if time runs short:** the EM model (Steps 7–8) is the extension. Steps 2–6 and 9–13 alone form a complete project that matches the original plan. Get those working first; do not let EM debugging block the rest.
+**Fallback if time runs short:** the EM model (Steps 5–6) is the extension. Steps 2–4 and 7–11 alone form a complete project that matches the original plan. Get those working first; do not let EM debugging block the rest.

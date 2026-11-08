@@ -262,35 +262,29 @@ extraction with pylidc (Week 1)</a></li>
 href="#step-3--cleaning-and-building-the-nodule-level-table-week-2"
 id="toc-step-3--cleaning-and-building-the-nodule-level-table-week-2">Step
 3 — Cleaning and building the nodule-level table (Week 2)</a></li>
-<li><a href="#step-4--feature-screening-with-benjaminihochberg-week-2"
-id="toc-step-4--feature-screening-with-benjaminihochberg-week-2">Step 4
-— Feature screening with Benjamini–Hochberg (Week 2)</a></li>
-<li><a href="#step-5--variable-selection-and-final-design-matrix-week-3"
-id="toc-step-5--variable-selection-and-final-design-matrix-week-3">Step
-5 — Variable selection and final design matrix (Week 3)</a></li>
-<li><a href="#step-6--naive-proportional-odds-model-week-3"
-id="toc-step-6--naive-proportional-odds-model-week-3">Step 6 — Naive
+<li><a href="#step-4--naive-proportional-odds-model-week-3"
+id="toc-step-4--naive-proportional-odds-model-week-3">Step 4 — Naive
 proportional odds model (Week 3)</a></li>
-<li><a href="#step-7--em-latent-true-grade-model-weeks-45"
-id="toc-step-7--em-latent-true-grade-model-weeks-45">Step 7 — EM latent
+<li><a href="#step-5--em-latent-true-grade-model-weeks-45"
+id="toc-step-5--em-latent-true-grade-model-weeks-45">Step 5 — EM latent
 true-grade model (Weeks 4–5)</a></li>
-<li><a href="#step-8--simulation-study-week-5"
-id="toc-step-8--simulation-study-week-5">Step 8 — Simulation study (Week
+<li><a href="#step-6--simulation-study-week-5"
+id="toc-step-6--simulation-study-week-5">Step 6 — Simulation study (Week
 5)</a></li>
-<li><a href="#step-9--diagnostics-and-hypothesis-tests-week-6"
-id="toc-step-9--diagnostics-and-hypothesis-tests-week-6">Step 9 —
+<li><a href="#step-7--diagnostics-and-hypothesis-tests-week-6"
+id="toc-step-7--diagnostics-and-hypothesis-tests-week-6">Step 7 —
 Diagnostics and hypothesis tests (Week 6)</a></li>
-<li><a href="#step-10--evaluation-on-the-test-set-week-6"
-id="toc-step-10--evaluation-on-the-test-set-week-6">Step 10 — Evaluation
+<li><a href="#step-8--evaluation-on-the-test-set-week-6"
+id="toc-step-8--evaluation-on-the-test-set-week-6">Step 8 — Evaluation
 on the test set (Week 6)</a></li>
-<li><a href="#step-11--policy-interpretation-week-7"
-id="toc-step-11--policy-interpretation-week-7">Step 11 — Policy
+<li><a href="#step-9--policy-interpretation-week-7"
+id="toc-step-9--policy-interpretation-week-7">Step 9 — Policy
 interpretation (Week 7)</a></li>
-<li><a href="#step-12--write-the-report-weeks-78"
-id="toc-step-12--write-the-report-weeks-78">Step 12 — Write the report
+<li><a href="#step-10--write-the-report-weeks-78"
+id="toc-step-10--write-the-report-weeks-78">Step 10 — Write the report
 (Weeks 7–8)</a></li>
-<li><a href="#step-13--slides-and-defense-week-8"
-id="toc-step-13--slides-and-defense-week-8">Step 13 — Slides and defense
+<li><a href="#step-11--slides-and-defense-week-8"
+id="toc-step-11--slides-and-defense-week-8">Step 11 — Slides and defense
 (Week 8)</a></li>
 <li><a
 href="#suggested-timeline-8-weeks-compress-if-your-deadline-is-sooner"
@@ -310,9 +304,8 @@ is. This file says <em>how</em> to do it and in what order.</p>
 <li><strong>Python</strong> is used only for data extraction
 (<code>pylidc</code> is Python-only).</li>
 <li><strong>R</strong> is used for all statistics
-(<code>MASS::polr</code>, <code>ordinal</code>, <code>brant</code>,
-<code>ordinalNet</code> are mature and accept case weights, which the EM
-M-step needs).</li>
+(<code>MASS::polr</code>, <code>ordinal</code>, <code>brant</code> are
+mature and accept case weights, which the EM M-step needs).</li>
 <li><code>☐</code> marks a concrete deliverable that should exist before
 you move on.</li>
 </ul>
@@ -328,19 +321,26 @@ you move on.</li>
 │   └── processed/      # nodule-level analysis tables
 ├── python/
 │   └── extract.py
-├── R/
-│   ├── 01_clean.R
-│   ├── 02_screen.R
-│   ├── 03_select.R
-│   ├── 04_polr.R
-│   ├── 05_em.R
-│   ├── 06_tests.R
-│   ├── 07_simulation.R
-│   └── 08_figures.R
-├── figures/
-├── report/
-│   ├── report.tex
-│   └── refs.bib
+├── main.tex
+├── main.pdf
+├── refs.bib
+├── statproj.sty
+├── isilogo.png
+├── codes/
+│   ├── compileplots.sh
+│   ├── r-codes/
+│   │   ├── clean-data.R
+│   │   ├── check-data.R
+│   │   ├── summary-cohort.R
+│   │   ├── summary-all.R
+│   │   ├── summary-grades.R
+│   │   ├── eda-summary.R
+│   │   ├── polr-fit.R
+│   │   ├── em-fit.R
+│   │   ├── hypo-test.R
+│   │   └── simulation.R
+│   └── plots/
+│       └── eda/        # one .R and one .pdf per figure
 └── slides/
     └── slides.tex</code></pre>
 <h3 id="02-python-environment">0.2 Python environment</h3>
@@ -358,13 +358,13 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="
 annotation database ships inside the package, so no DICOM download is
 needed for anything in this project.</p>
 <h3 id="03-r-environment">0.3 R environment</h3>
-<p>Steps 2–3 (<code>R/01_clean.R</code>, <code>R/check_data.R</code>,
-<code>R/eda.R</code>) need only base R. Install the rest before Step 4.
-Some dependencies of <code>ordinal</code> and <code>car</code> compile
-Fortran, so install a Fortran compiler first:</p>
+<p>Steps 2–3 (<code>clean-data.R</code>, <code>check-data.R</code>,
+<code>eda-summary.R</code>) need only base R. Install the rest before
+Step 4. Some dependencies of <code>ordinal</code> compile Fortran, so
+install a Fortran compiler first:</p>
 <div class="sourceCode" id="cb3"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> pacman <span class="at">-S</span> gcc-fortran</span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">&quot;ordinal&quot;</span>, <span class="st">&quot;brant&quot;</span>, <span class="st">&quot;ordinalNet&quot;</span>, <span class="st">&quot;car&quot;</span>,</span>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">&quot;ordinal&quot;</span>, <span class="st">&quot;brant&quot;</span>,</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;ggplot2&quot;</span>, <span class="st">&quot;corrplot&quot;</span>, <span class="st">&quot;xtable&quot;</span>))</span></code></pre></div>
 <p>☐ <code>pylidc</code> returns 1018 scans and 6859 annotations; all R
 packages load.</p>
@@ -391,19 +391,6 @@ logistic <span class="math inline">\(\varepsilon\)</span> and thresholds
 class="math inline">\(e^{\beta}\)</span> as an odds ratio</td>
 <td>Agresti, <em>Categorical Data Analysis</em>, ch. on ordinal models
 (Topic 2 notes)</td>
-</tr>
-<tr>
-<td>Benjamini–Hochberg</td>
-<td>State the procedure, know it controls FDR under independence /
-positive dependence (PRDS), know Benjamini–Yekutieli for arbitrary
-dependence</td>
-<td>Topic 11 notes; Benjamini &amp; Hochberg (1995)</td>
-</tr>
-<tr>
-<td>AIC/BIC, Lasso</td>
-<td>Know when each is appropriate and why post-selection p-values are
-optimistic</td>
-<td>Topic 9 notes; ESL ch. 3</td>
 </tr>
 <tr>
 <td>Brant test</td>
@@ -540,9 +527,8 @@ feature pool is:</p>
 <li>contour-derived geometry (≈ 10–15 features from 2.2), and</li>
 <li>the radiologists' semantic ratings (8 features).</li>
 </ol>
-<p>That is enough for BH screening to be meaningful but not "dozens of
-texture features". State this honestly in the report. (Optional
-extension: download the DICOMs for a subset and run
+<p>That is not "dozens of texture features". State this honestly in the
+report. (Optional extension: download the DICOMs for a subset and run
 <code>pyradiomics</code>. Skip unless you have spare time.)</p>
 <p>☐ <code>data/raw/annotations.csv</code> exists; a short table of
 counts for the report's Data section.</p>
@@ -551,7 +537,7 @@ counts for the report's Data section.</p>
 id="step-3--cleaning-and-building-the-nodule-level-table-week-2">Step 3
 — Cleaning and building the nodule-level table (Week 2)</h2>
 <div class="sourceCode" id="cb6"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> R/01_clean.R</span></code></pre></div>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> codes/r-codes/clean-data.R</span></code></pre></div>
 <p>Base R only. Writes to <code>data/processed/</code>:</p>
 <table>
 <thead>
@@ -640,8 +626,8 @@ patient</h3>
 <code>20261105</code>), not the nodule level, so nodules from one
 patient never appear in both sets. The assignment is the
 <code>split</code> column of <code>nodules.csv</code>.</p>
-<p><strong>All screening and selection (Steps 4–5) uses the training set
-only.</strong> The test set is touched once, in Step 10.</p>
+<p><strong>All model fitting uses the training set only.</strong> The
+test set is touched once, in Step 8.</p>
 <h3 id="36-exploratory-analysis">3.6 Exploratory analysis</h3>
 <ul>
 <li>Bar chart of <code>mal_median</code>; bar chart of all individual
@@ -655,89 +641,22 @@ per nodule. This motivates the EM model.</li>
 </ul>
 <p>☐ <code>data/processed/nodules_train.csv</code>,
 <code>nodules_test.csv</code>; 3–4 EDA figures in
-<code>figures/</code>.</p>
+<code>codes/plots/eda/</code>.</p>
 <hr />
-<h2 id="step-4--feature-screening-with-benjaminihochberg-week-2">Step 4
-— Feature screening with Benjamini–Hochberg (Week 2)</h2>
-<p>Script: <code>R/02_screen.R</code>. Topic 11.</p>
-<ol type="1">
-<li>For each candidate feature <span class="math inline">\(X_j\)</span>,
-test <span class="math inline">\(H_{0j}\)</span>: no association with
-malignancy. Use a <strong>univariate proportional odds LRT</strong>: fit
-<code>polr(mal_median ~ X_j)</code> vs the intercept-only model, <span
-class="math inline">\(-2\log\Lambda \sim \chi^2_1\)</span>. (A Spearman
-correlation test is a simpler alternative.)</li>
-<li>Collect the <span class="math inline">\(m\)</span> p-values, sort
-them <span class="math inline">\(p_{(1)} \le \dots \le
-p_{(m)}\)</span>.</li>
-<li>BH at <span class="math inline">\(q = 0.05\)</span>: find the
-largest <span class="math inline">\(k\)</span> with <span
-class="math inline">\(p_{(k)} \le \frac{k}{m}q\)</span>; reject <span
-class="math inline">\(H_{0(1)},\dots,H_{0(k)}\)</span>. In R:
-<code>p.adjust(p, method = "BH") &lt; 0.05</code>.</li>
-<li>Because features are strongly correlated, also report
-Benjamini–Yekutieli (<code>method = "BY"</code>), which is valid under
-arbitrary dependence, and Bonferroni for contrast.</li>
-<li>Report a table: feature, test statistic, raw p, BH-adjusted p,
-BY-adjusted p, selected (Y/N).</li>
-</ol>
-<p>Note for the report: screening uses <code>mal_median</code>, i.e. the
-naive response, before the EM model exists. That is acceptable as a
-screening step; say so.</p>
-<p>☐ Screening table (appendix); list of features that survive.</p>
-<hr />
-<h2 id="step-5--variable-selection-and-final-design-matrix-week-3">Step
-5 — Variable selection and final design matrix (Week 3)</h2>
-<p>Script: <code>R/03_select.R</code>. Topic 9.</p>
-<h3 id="51-collinearity">5.1 Collinearity</h3>
-<ul>
-<li>Compute VIFs (<code>car::vif</code> on a linear model of the same
-predictors, as a diagnostic).</li>
-<li>Among near-duplicates (diameter / log-volume / log-surface-area),
-keep <strong>one size variable</strong>. Prefer the one with the best
-univariate fit, or log-volume for interpretability.</li>
-</ul>
-<h3 id="52-criterion-based-selection">5.2 Criterion-based selection</h3>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>full <span class="ot">&lt;-</span> <span class="fu">polr</span>(mal_median <span class="sc">~</span> ., <span class="at">data =</span> train_screened, <span class="at">Hess =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>sel_aic <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(full, <span class="at">direction =</span> <span class="st">&quot;both&quot;</span>, <span class="at">k =</span> <span class="dv">2</span>,              <span class="at">trace =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>sel_bic <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(full, <span class="at">direction =</span> <span class="st">&quot;both&quot;</span>, <span class="at">k =</span> <span class="fu">log</span>(<span class="fu">nrow</span>(train_screened)), <span class="at">trace =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
-<h3 id="53-shrinkage">5.3 Shrinkage</h3>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ordinalNet)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>fit_lasso <span class="ot">&lt;-</span> <span class="fu">ordinalNet</span>(<span class="fu">as.matrix</span>(X_train), y_train,</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">family =</span> <span class="st">&quot;cumulative&quot;</span>, <span class="at">link =</span> <span class="st">&quot;logit&quot;</span>,</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">parallelTerms =</span> <span class="cn">TRUE</span>, <span class="at">nonparallelTerms =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">alpha =</span> <span class="dv">1</span>)                 <span class="co"># alpha = 0 for ridge</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>cv <span class="ot">&lt;-</span> <span class="fu">ordinalNetCV</span>(<span class="fu">as.matrix</span>(X_train), y_train, <span class="at">family =</span> <span class="st">&quot;cumulative&quot;</span>,</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">link =</span> <span class="st">&quot;logit&quot;</span>, <span class="at">parallelTerms =</span> <span class="cn">TRUE</span>, <span class="at">nonparallelTerms =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">alpha =</span> <span class="dv">1</span>, <span class="at">tuneMethod =</span> <span class="st">&quot;cvLoglik&quot;</span>)</span></code></pre></div>
-<p>Plot the Lasso coefficient path vs λ (appendix figure).</p>
-<h3 id="54-decide">5.4 Decide</h3>
-<p>Compare the variable sets from AIC, BIC and Lasso. Choose the final
-set (BIC or Lasso-1SE usually gives the most parsimonious one) and
-<strong>justify it in one paragraph</strong>. Aim for roughly 3–6
-predictors.</p>
-<p>Caveat for the report: p-values from Step 6 onwards are computed on
-the same training data used for selection, so they are optimistic
-(post-selection inference). Mention it; optionally re-fit on a held-out
-half of the training data to check stability.</p>
-<p>☐ Final predictor list; table comparing AIC/BIC/Lasso selections;
-Lasso path figure.</p>
-<hr />
-<h2 id="step-6--naive-proportional-odds-model-week-3">Step 6 — Naive
+<h2 id="step-4--naive-proportional-odds-model-week-3">Step 4 — Naive
 proportional odds model (Week 3)</h2>
-<p>Script: <code>R/04_polr.R</code>. Topic 2. This is the baseline the
-EM model will be compared against.</p>
-<h3 id="61-fit">6.1 Fit</h3>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>m_naive <span class="ot">&lt;-</span> <span class="fu">polr</span>(mal_median <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3, <span class="at">data =</span> train, <span class="at">Hess =</span> <span class="cn">TRUE</span>, <span class="at">method =</span> <span class="st">&quot;logistic&quot;</span>)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m_naive)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(<span class="fu">coef</span>(m_naive))           <span class="co"># odds ratios</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(<span class="fu">confint</span>(m_naive))        <span class="co"># profile-likelihood CIs</span></span></code></pre></div>
+<p>Script: <code>codes/r-codes/polr-fit.R</code>. Topic 2. This is the
+baseline the EM model will be compared against.</p>
+<h3 id="41-fit">4.1 Fit</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>m_naive <span class="ot">&lt;-</span> <span class="fu">polr</span>(mal_median <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3, <span class="at">data =</span> train, <span class="at">Hess =</span> <span class="cn">TRUE</span>, <span class="at">method =</span> <span class="st">&quot;logistic&quot;</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m_naive)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(<span class="fu">coef</span>(m_naive))           <span class="co"># odds ratios</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(<span class="fu">confint</span>(m_naive))        <span class="co"># profile-likelihood CIs</span></span></code></pre></div>
 <p>Model: <span class="math inline">\(\operatorname{logit} P(Y \le k
 \mid x) = \alpha_k - x^\top\beta\)</span>, <span class="math inline">\(k
 = 1,\dots,4\)</span>.</p>
-<h3 id="62-interpret">6.2 Interpret</h3>
+<h3 id="42-interpret">4.2 Interpret</h3>
 <p>For a one-SD increase in <span class="math inline">\(x_j\)</span>,
 the odds of being in a <strong>higher</strong> malignancy category (vs.
 at or below any given threshold) multiply by <span
@@ -745,23 +664,23 @@ class="math inline">\(e^{\beta_j}\)</span>, the same factor at every
 threshold. Note R's <code>polr</code> sign convention (<span
 class="math inline">\(\alpha_k - x^\top\beta\)</span>), so positive
 <span class="math inline">\(\beta\)</span> means higher malignancy.</p>
-<h3 id="63-figures">6.3 Figures</h3>
+<h3 id="43-figures">4.3 Figures</h3>
 <ul>
 <li>Predicted category probabilities <span class="math inline">\(P(Y = k
-\mid x)\)</span> vs. the size variable, with other predictors at their
+\mid x)\)</span> vs. a size variable, with other predictors at their
 mean: five curves, one per category.</li>
 <li>Odds-ratio forest plot with 95% CIs.</li>
 </ul>
-<h3 id="64-secondary-model">6.4 Secondary model</h3>
+<h3 id="44-secondary-model">4.4 Secondary model</h3>
 <p>Repeat with semantic features added; report the comparison in one
 table.</p>
 <p>☐ Coefficient table, odds-ratio plot, probability-curve plot.</p>
 <hr />
-<h2 id="step-7--em-latent-true-grade-model-weeks-45">Step 7 — EM latent
+<h2 id="step-5--em-latent-true-grade-model-weeks-45">Step 5 — EM latent
 true-grade model (Weeks 4–5)</h2>
-<p>Script: <code>R/05_em.R</code>. This is the core of the extension
-(Phase 4 of <code>PLAN.md</code>).</p>
-<h3 id="71-the-model">7.1 The model</h3>
+<p>Script: <code>codes/r-codes/em-fit.R</code>. This is the core of the
+extension (Phase 4 of <code>PLAN.md</code>).</p>
+<h3 id="51-the-model">5.1 The model</h3>
 <ul>
 <li>Latent true grade <span class="math inline">\(Z_i \in
 \{1,\dots,5\}\)</span> with <span class="math inline">\(P(Z_i \le k \mid
@@ -780,7 +699,7 @@ p_{ik}(\alpha,\beta) \prod_{r=1}^5 \pi_{kr}^{C_{ir}}\]</span> where
 Step 3.3.</li>
 </ul>
 <h3
-id="72-write-the-derivation-first-on-paper-then-into-the-appendix">7.2
+id="52-write-the-derivation-first-on-paper-then-into-the-appendix">5.2
 Write the derivation first (on paper, then into the appendix)</h3>
 <ol type="1">
 <li>Complete-data log-likelihood: <span class="math inline">\(\ell_c =
@@ -800,43 +719,43 @@ Q(\theta\mid\theta^{(t)}) - H(\theta\mid\theta^{(t)})\)</span>, and
 class="math inline">\(\theta^{(t)}\)</span> by Jensen / Gibbs'
 inequality.</li>
 </ol>
-<h3 id="73-implementation">7.3 Implementation</h3>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>logsumexp <span class="ot">&lt;-</span> <span class="cf">function</span>(M) {             <span class="co"># row-wise log-sum-exp</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">apply</span>(M, <span class="dv">1</span>, max)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  m <span class="sc">+</span> <span class="fu">log</span>(<span class="fu">rowSums</span>(<span class="fu">exp</span>(M <span class="sc">-</span> m)))</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>em_dawid_skene_polr <span class="ot">&lt;-</span> <span class="cf">function</span>(X, C, <span class="at">K =</span> <span class="dv">5</span>, w_init, <span class="at">max_iter =</span> <span class="dv">500</span>, <span class="at">tol =</span> <span class="dv">1</span>e<span class="sc">-</span><span class="dv">8</span>) {</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(X); w <span class="ot">&lt;-</span> w_init; ll_trace <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">0</span>)</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(X)</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  long <span class="ot">&lt;-</span> X[<span class="fu">rep</span>(<span class="fu">seq_len</span>(n), <span class="at">times =</span> K), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  long<span class="sc">$</span>z <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(<span class="fu">seq_len</span>(K), <span class="at">each =</span> n), <span class="at">levels =</span> <span class="fu">seq_len</span>(K), <span class="at">ordered =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_len</span>(max_iter)) {</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- M-step: confusion matrix (closed form) ----</span></span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    num <span class="ot">&lt;-</span> <span class="fu">t</span>(w) <span class="sc">%*%</span> C                              <span class="co"># K x K</span></span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    Pi  <span class="ot">&lt;-</span> num <span class="sc">/</span> <span class="fu">rowSums</span>(num)</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    Pi  <span class="ot">&lt;-</span> <span class="fu">pmax</span>(Pi, <span class="dv">1</span>e<span class="sc">-</span><span class="dv">10</span>); Pi <span class="ot">&lt;-</span> Pi <span class="sc">/</span> <span class="fu">rowSums</span>(Pi)</span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- M-step: weighted proportional-odds fit ----</span></span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    long<span class="sc">$</span>wt <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(w)</span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    keep <span class="ot">&lt;-</span> long<span class="sc">$</span>wt <span class="sc">&gt;</span> <span class="dv">1</span>e<span class="sc">-</span><span class="dv">8</span></span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">polr</span>(z <span class="sc">~</span> . <span class="sc">-</span> wt, <span class="at">data =</span> long[keep, ], <span class="at">weights =</span> wt, <span class="at">Hess =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- E-step ----</span></span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    P    <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> X, <span class="at">type =</span> <span class="st">&quot;probs&quot;</span>)          <span class="co"># n x K prior</span></span>
-<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    logW <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="fu">pmax</span>(P, <span class="dv">1</span>e<span class="sc">-</span><span class="dv">300</span>)) <span class="sc">+</span> C <span class="sc">%*%</span> <span class="fu">t</span>(<span class="fu">log</span>(Pi))            <span class="co"># n x K</span></span>
-<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    lse  <span class="ot">&lt;-</span> <span class="fu">logsumexp</span>(logW)</span>
-<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    w    <span class="ot">&lt;-</span> <span class="fu">exp</span>(logW <span class="sc">-</span> lse)</span>
-<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- convergence ----</span></span>
-<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>    ll_trace <span class="ot">&lt;-</span> <span class="fu">c</span>(ll_trace, <span class="fu">sum</span>(lse))              <span class="co"># observed-data log-lik</span></span>
-<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (t <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span> <span class="fu">abs</span>(<span class="fu">diff</span>(<span class="fu">tail</span>(ll_trace, <span class="dv">2</span>))) <span class="sc">&lt;</span> tol <span class="sc">*</span> <span class="fu">abs</span>(<span class="fu">tail</span>(ll_trace, <span class="dv">1</span>))) <span class="cf">break</span></span>
-<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">Pi =</span> Pi, <span class="at">w =</span> w, <span class="at">loglik =</span> <span class="fu">tail</span>(ll_trace, <span class="dv">1</span>), <span class="at">trace =</span> ll_trace)</span>
-<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="53-implementation">5.3 Implementation</h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>logsumexp <span class="ot">&lt;-</span> <span class="cf">function</span>(M) {             <span class="co"># row-wise log-sum-exp</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">apply</span>(M, <span class="dv">1</span>, max)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  m <span class="sc">+</span> <span class="fu">log</span>(<span class="fu">rowSums</span>(<span class="fu">exp</span>(M <span class="sc">-</span> m)))</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>em_dawid_skene_polr <span class="ot">&lt;-</span> <span class="cf">function</span>(X, C, <span class="at">K =</span> <span class="dv">5</span>, w_init, <span class="at">max_iter =</span> <span class="dv">500</span>, <span class="at">tol =</span> <span class="dv">1</span>e<span class="sc">-</span><span class="dv">8</span>) {</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(X); w <span class="ot">&lt;-</span> w_init; ll_trace <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">0</span>)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(X)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  long <span class="ot">&lt;-</span> X[<span class="fu">rep</span>(<span class="fu">seq_len</span>(n), <span class="at">times =</span> K), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  long<span class="sc">$</span>z <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(<span class="fu">seq_len</span>(K), <span class="at">each =</span> n), <span class="at">levels =</span> <span class="fu">seq_len</span>(K), <span class="at">ordered =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_len</span>(max_iter)) {</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- M-step: confusion matrix (closed form) ----</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    num <span class="ot">&lt;-</span> <span class="fu">t</span>(w) <span class="sc">%*%</span> C                              <span class="co"># K x K</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    Pi  <span class="ot">&lt;-</span> num <span class="sc">/</span> <span class="fu">rowSums</span>(num)</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    Pi  <span class="ot">&lt;-</span> <span class="fu">pmax</span>(Pi, <span class="dv">1</span>e<span class="sc">-</span><span class="dv">10</span>); Pi <span class="ot">&lt;-</span> Pi <span class="sc">/</span> <span class="fu">rowSums</span>(Pi)</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- M-step: weighted proportional-odds fit ----</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    long<span class="sc">$</span>wt <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(w)</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    keep <span class="ot">&lt;-</span> long<span class="sc">$</span>wt <span class="sc">&gt;</span> <span class="dv">1</span>e<span class="sc">-</span><span class="dv">8</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">polr</span>(z <span class="sc">~</span> . <span class="sc">-</span> wt, <span class="at">data =</span> long[keep, ], <span class="at">weights =</span> wt, <span class="at">Hess =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- E-step ----</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    P    <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> X, <span class="at">type =</span> <span class="st">&quot;probs&quot;</span>)          <span class="co"># n x K prior</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>    logW <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="fu">pmax</span>(P, <span class="dv">1</span>e<span class="sc">-</span><span class="dv">300</span>)) <span class="sc">+</span> C <span class="sc">%*%</span> <span class="fu">t</span>(<span class="fu">log</span>(Pi))            <span class="co"># n x K</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    lse  <span class="ot">&lt;-</span> <span class="fu">logsumexp</span>(logW)</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    w    <span class="ot">&lt;-</span> <span class="fu">exp</span>(logW <span class="sc">-</span> lse)</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    <span class="do">## ---- convergence ----</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    ll_trace <span class="ot">&lt;-</span> <span class="fu">c</span>(ll_trace, <span class="fu">sum</span>(lse))              <span class="co"># observed-data log-lik</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (t <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span> <span class="fu">abs</span>(<span class="fu">diff</span>(<span class="fu">tail</span>(ll_trace, <span class="dv">2</span>))) <span class="sc">&lt;</span> tol <span class="sc">*</span> <span class="fu">abs</span>(<span class="fu">tail</span>(ll_trace, <span class="dv">1</span>))) <span class="cf">break</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">Pi =</span> Pi, <span class="at">w =</span> w, <span class="at">loglik =</span> <span class="fu">tail</span>(ll_trace, <span class="dv">1</span>), <span class="at">trace =</span> ll_trace)</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Notes:</p>
 <ul>
 <li><strong>Initialisation:</strong> <code>w_init[i, k] = 1</code> if
@@ -862,7 +781,7 @@ equal).</li>
 harmless here. You can also use <code>ordinal::clm</code> with
 <code>weights =</code>.</li>
 </ul>
-<h3 id="74-standard-errors">7.4 Standard errors</h3>
+<h3 id="54-standard-errors">5.4 Standard errors</h3>
 <p>Parametric or nonparametric bootstrap at the <strong>patient</strong>
 level:</p>
 <ol type="1">
@@ -875,16 +794,16 @@ class="math inline">\(\pi\)</span>.</li>
 </ol>
 <p>(Louis' identity is the analytical alternative; mention it in the
 theory section even if you use the bootstrap.)</p>
-<h3 id="75-check-with-crowd-kit-optional-but-quick">7.5 Check with
+<h3 id="55-check-with-crowd-kit-optional-but-quick">5.5 Check with
 Crowd-Kit (optional but quick)</h3>
 <p>Fit plain Dawid–Skene without covariates (set the structural part to
 just class proportions) in your code and in Python's
 <code>crowd-kit</code> (<code>crowdkit.aggregation.DawidSkene</code>).
 The posterior class probabilities should agree closely.</p>
-<h3 id="76-outputs">7.6 Outputs</h3>
+<h3 id="56-outputs">5.6 Outputs</h3>
 <ul>
 <li>Table: <span class="math inline">\(\hat\beta\)</span> (naive, Step
-6) vs. <span class="math inline">\(\hat\beta\)</span> (EM), with
+4) vs. <span class="math inline">\(\hat\beta\)</span> (EM), with
 SEs.</li>
 <li>Heatmap of <span class="math inline">\(\hat\pi\)</span> (rows = true
 grade, columns = reported rating).</li>
@@ -894,9 +813,9 @@ class="math inline">\(w_i\)</span>: which nodules are "ambiguous".</li>
 </ul>
 <p>☐ Converged EM fit; four outputs above.</p>
 <hr />
-<h2 id="step-8--simulation-study-week-5">Step 8 — Simulation study (Week
+<h2 id="step-6--simulation-study-week-5">Step 6 — Simulation study (Week
 5)</h2>
-<p>Script: <code>R/07_simulation.R</code>. This shows your EM
+<p>Script: <code>codes/r-codes/simulation.R</code>. This shows your EM
 implementation is correct, and it is a strong appendix item.</p>
 <ol type="1">
 <li>Fix "true" values: <span class="math inline">\(\beta\)</span> and
@@ -920,17 +839,17 @@ class="math inline">\(Z\)</span>; EM is approximately unbiased. Whether
 or not that happens, report it.</p>
 <p>☐ Simulation table (bias / RMSE, naive vs EM).</p>
 <hr />
-<h2 id="step-9--diagnostics-and-hypothesis-tests-week-6">Step 9 —
+<h2 id="step-7--diagnostics-and-hypothesis-tests-week-6">Step 7 —
 Diagnostics and hypothesis tests (Week 6)</h2>
-<p>Script: <code>R/06_tests.R</code>. Phase 5 of
+<p>Script: <code>codes/r-codes/hypo-test.R</code>. Phase 5 of
 <code>PLAN.md</code>.</p>
-<h3 id="91-proportional-odds-assumption">9.1 Proportional odds
+<h3 id="71-proportional-odds-assumption">7.1 Proportional odds
 assumption</h3>
 <ul>
 <li><p><strong>Brant test</strong> (a Wald test) on the naive model:</p>
-<div class="sourceCode" id="cb11"><pre
-class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brant)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">brant</span>(m_naive)          <span class="co"># omnibus + per-variable chi-square tests</span></span></code></pre></div></li>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brant)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">brant</span>(m_naive)          <span class="co"># omnibus + per-variable chi-square tests</span></span></code></pre></div></li>
 <li><p><strong>Likelihood-ratio alternative:</strong> fit with
 <code>ordinal::clm</code> and run <code>nominal_test(model)</code>,
 which compares the PO model with a partial PO model that frees each
@@ -941,7 +860,7 @@ fit a partial PO model for that variable
 <li><p>Note: these tests are applied to the naive model; in the EM model
 PO is assumed for the latent grade.</p></li>
 </ul>
-<h3 id="92-likelihood-ratio-tests-wilks">9.2 Likelihood-ratio tests
+<h3 id="72-likelihood-ratio-tests-wilks">7.2 Likelihood-ratio tests
 (Wilks)</h3>
 <p>For nested models <span class="math inline">\(M_0 \subset
 M_1\)</span>: <span class="math inline">\(\Lambda = -2(\ell_0 - \ell_1)
@@ -963,16 +882,15 @@ likelihood.</li>
 <p>Write a short paragraph linking this to Neyman–Pearson: the LRT is
 the most powerful test in the simple-vs-simple case, and Wilks gives its
 asymptotic null distribution in the composite case.</p>
-<h3 id="93-model-fit">9.3 Model fit</h3>
+<h3 id="73-model-fit">7.3 Model fit</h3>
 <ul>
-<li>Compare AIC/BIC of naive vs. secondary models.</li>
 <li>For the EM model, compare against the plain Dawid–Skene model
 without covariates (LRT: are the features informative about the true
 grade beyond the readers' ratings?).</li>
 </ul>
 <p>☐ Brant/nominal-test table; LRT table.</p>
 <hr />
-<h2 id="step-10--evaluation-on-the-test-set-week-6">Step 10 — Evaluation
+<h2 id="step-8--evaluation-on-the-test-set-week-6">Step 8 — Evaluation
 on the test set (Week 6)</h2>
 <p>Touch the test set <strong>once</strong>, after all modelling
 decisions are frozen.</p>
@@ -995,7 +913,7 @@ x)\)</span> (binned predicted vs. observed proportion).</li>
 </ol>
 <p>☐ Test-set performance table; calibration plot.</p>
 <hr />
-<h2 id="step-11--policy-interpretation-week-7">Step 11 — Policy
+<h2 id="step-9--policy-interpretation-week-7">Step 9 — Policy
 interpretation (Week 7)</h2>
 <p>Tie the results to the triage recommendation in
 <code>PLAN.md</code>:</p>
@@ -1018,30 +936,29 @@ cancer. (TCIA hosts a diagnosis spreadsheet for a small subset of LIDC
 patients; mention it as possible external validation.)</li>
 <li>No intensity-based radiomics (no DICOM).</li>
 <li>Circularity of semantic features.</li>
-<li>Post-selection inference.</li>
 <li>Conditional-independence assumption of readers in the EM model.</li>
 <li>LIDC is a research dataset from a few US centres; generalisation to
 a public-health setting such as Indian hospitals is untested.</li>
 </ol>
 <hr />
-<h2 id="step-12--write-the-report-weeks-78">Step 12 — Write the report
+<h2 id="step-10--write-the-report-weeks-78">Step 10 — Write the report
 (Weeks 7–8)</h2>
-<p><code>report/report.tex</code>. <strong>Max 5 pages, double-spaced,
+<p><code>main.tex</code>. <strong>Max 5 pages, double-spaced,
 A4.</strong> Appendix does not count.</p>
-<h3 id="121-preamble">12.1 Preamble</h3>
-<div class="sourceCode" id="cb12"><pre
-class="sourceCode latex"><code class="sourceCode latex"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="bu">\documentclass</span>[11pt]{<span class="ex">article</span>}</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[a4paper, margin=2.5cm]{<span class="ex">geometry</span>}</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">setspace</span>}<span class="fu">\doublespacing</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">amsmath, amssymb, booktabs, graphicx, hyperref</span>}</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[style=authoryear]{<span class="ex">biblatex</span>}<span class="fu">\addbibresource</span>{refs.bib}</span></code></pre></div>
-<h3 id="122-main-text--page-budget">12.2 Main text (≈ page budget)</h3>
+<h3 id="101-preamble">10.1 Preamble</h3>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode latex"><code class="sourceCode latex"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="bu">\documentclass</span>[11pt]{<span class="ex">article</span>}</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[a4paper, margin=2.5cm]{<span class="ex">geometry</span>}</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">setspace</span>}<span class="fu">\doublespacing</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">amsmath, amssymb, booktabs, graphicx, hyperref</span>}</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[style=authoryear]{<span class="ex">biblatex</span>}<span class="fu">\addbibresource</span>{refs.bib}</span></code></pre></div>
+<h3 id="102-main-text--page-budget">10.2 Main text (≈ page budget)</h3>
 <ol type="1">
 <li><strong>Introduction and research questions</strong> (0.5 p).
 Example RQs:
 <ul>
 <li>RQ1: Which geometric nodule features are associated with
-radiologist-assessed malignancy after FDR control?</li>
+radiologist-assessed malignancy?</li>
 <li>RQ2: Does the proportional-odds model adequately describe that
 relationship?</li>
 <li>RQ3: Does accounting for inter-reader disagreement (EM) change the
@@ -1049,8 +966,8 @@ estimated effects?</li>
 </ul></li>
 <li><strong>Data</strong> (0.75 p): LIDC-IDRI, pylidc, unit of analysis,
 aggregation, train/test split, counts table.</li>
-<li><strong>Methodology</strong> (1.5 p): BH screening → selection → PO
-model → EM latent-grade model → Brant/LRT. Equations, not code.</li>
+<li><strong>Methodology</strong> (1.5 p): PO model → EM latent-grade
+model → Brant/LRT. Equations, not code.</li>
 <li><strong>Results</strong> (1.5 p): one coefficient table (naive vs
 EM), one key figure (probability curves or <span
 class="math inline">\(\hat\pi\)</span> heatmap), test results in
@@ -1058,31 +975,30 @@ text.</li>
 <li><strong>Discussion, policy recommendations, limitations</strong>
 (0.75 p).</li>
 </ol>
-<h3 id="123-appendix-no-page-limit">12.3 Appendix (no page limit)</h3>
+<h3 id="103-appendix-no-page-limit">10.3 Appendix (no page limit)</h3>
 <ul>
 <li>A: Full code (use <code>listings</code> or <code>minted</code>, or
 <code>\input</code> the scripts).</li>
-<li>B: BH screening table, selection comparison, Lasso path.</li>
-<li>C: Full coefficient tables, odds-ratio plot, probability curves for
+<li>B: Full coefficient tables, odds-ratio plot, probability curves for
 each category.</li>
-<li>D: EM derivation, monotonicity proof, log-likelihood trace.</li>
-<li>E: Simulation study.</li>
-<li>F: Brant and LRT tables; calibration plot.</li>
+<li>C: EM derivation, monotonicity proof, log-likelihood trace.</li>
+<li>D: Simulation study.</li>
+<li>E: Brant and LRT tables; calibration plot.</li>
 </ul>
-<h3 id="124-bibliography-minimum">12.4 Bibliography (minimum)</h3>
+<h3 id="104-bibliography-minimum">10.4 Bibliography (minimum)</h3>
 <p>Armato et al. (2011, <em>Medical Physics</em>) for LIDC-IDRI; Hancock
 &amp; Magnan (2016) for pylidc; McCullagh (1980) for PO models; Brant
-(1990); Benjamini &amp; Hochberg (1995); Dempster, Laird &amp; Rubin
-(1977); Dawid &amp; Skene (1979); Agresti.</p>
+(1990); Dempster, Laird &amp; Rubin (1977); Dawid &amp; Skene (1979);
+Agresti.</p>
 <p>Compile, check the page count with the appendix excluded, and ask
 someone outside the group to read it once.</p>
 <p>☐ <code>report.pdf</code>, ≤ 5 pages of main text.</p>
 <hr />
-<h2 id="step-13--slides-and-defense-week-8">Step 13 — Slides and defense
+<h2 id="step-11--slides-and-defense-week-8">Step 11 — Slides and defense
 (Week 8)</h2>
 <p><code>slides/slides.tex</code> (Beamer). <strong>Fewer than 16
 slides, 20–25 minutes, 5–7 minutes per member.</strong></p>
-<p>Suggested 15-slide structure and split (assuming 4 members):</p>
+<p>Suggested 13-slide structure and split (assuming 4 members):</p>
 <table>
 <thead>
 <tr>
@@ -1110,61 +1026,51 @@ slides, 20–25 minutes, 5–7 minutes per member.</strong></p>
 <tr>
 <td>4</td>
 <td>EDA: malignancy distribution, reader disagreement</td>
-<td>A</td>
+<td>B</td>
 </tr>
 <tr>
 <td>5</td>
-<td>BH screening</td>
-<td>B</td>
-</tr>
-<tr>
-<td>6</td>
-<td>Variable selection (AIC/BIC/Lasso)</td>
-<td>B</td>
-</tr>
-<tr>
-<td>7</td>
 <td>Proportional odds model</td>
 <td>B</td>
 </tr>
 <tr>
-<td>8</td>
+<td>6</td>
 <td>Naive model results: odds ratios, probability curves</td>
 <td>B</td>
 </tr>
 <tr>
-<td>9</td>
+<td>7</td>
 <td>Why EM: latent true grade</td>
 <td>C</td>
 </tr>
 <tr>
-<td>10</td>
+<td>8</td>
 <td>E-step / M-step and monotonicity</td>
 <td>C</td>
 </tr>
 <tr>
-<td>11</td>
+<td>9</td>
 <td>EM results: <span class="math inline">\(\hat\pi\)</span> heatmap,
 <span class="math inline">\(\beta\)</span> comparison</td>
 <td>C</td>
 </tr>
 <tr>
-<td>12</td>
+<td>10</td>
 <td>Simulation study</td>
 <td>C</td>
 </tr>
 <tr>
-<td>13</td>
+<td>11</td>
 <td>Brant test and LRTs</td>
 <td>D</td>
 </tr>
 <tr>
-<td>14</td>
+<td>12</td>
 <td>Test-set performance and triage rule</td>
 <td>D</td>
 </tr>
 <tr>
-<td>15</td>
+<td>13</td>
 <td>Limitations and conclusions</td>
 <td>D</td>
 </tr>
@@ -1203,43 +1109,43 @@ started</td>
 </tr>
 <tr>
 <td>2</td>
-<td>3, 4</td>
-<td>Nodule-level train/test tables; EDA; BH screening done</td>
+<td>3</td>
+<td>Nodule-level train/test tables; EDA</td>
 </tr>
 <tr>
 <td>3</td>
-<td>5, 6</td>
-<td>Final predictors; naive PO model fitted</td>
+<td>4</td>
+<td>Naive PO model fitted</td>
 </tr>
 <tr>
 <td>4</td>
-<td>7.1–7.3</td>
+<td>5.1–5.3</td>
 <td>EM derivation written; EM code converging</td>
 </tr>
 <tr>
 <td>5</td>
-<td>7.4–7.6, 8</td>
+<td>5.4–5.6, 6</td>
 <td>Bootstrap SEs; simulation study</td>
 </tr>
 <tr>
 <td>6</td>
-<td>9, 10</td>
+<td>7, 8</td>
 <td>Diagnostics, LRTs, test-set evaluation</td>
 </tr>
 <tr>
 <td>7</td>
-<td>11, 12</td>
+<td>9, 10</td>
 <td>Policy section; report draft</td>
 </tr>
 <tr>
 <td>8</td>
-<td>12, 13</td>
+<td>10, 11</td>
 <td>Report final; slides; rehearsals</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Fallback if time runs short:</strong> the EM model (Steps
-7–8) is the extension. Steps 2–6 and 9–13 alone form a complete project
+5–6) is the extension. Steps 2–4 and 7–11 alone form a complete project
 that matches the original plan. Get those working first; do not let EM
 debugging block the rest.</p>
 </body>
