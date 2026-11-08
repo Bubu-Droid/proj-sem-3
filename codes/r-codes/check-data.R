@@ -2,7 +2,7 @@
 # Exits non-zero if any check fails; WARN lines are known, documented quirks.
 #
 # Run from the repository root:
-#   Rscript R/check_data.R
+#   Rscript codes/r-codes/check-data.R
 
 raw <- read.csv("data/raw/annotations.csv", stringsAsFactors = FALSE)
 nod <- read.csv("data/processed/nodules.csv", stringsAsFactors = FALSE)

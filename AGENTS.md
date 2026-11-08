@@ -15,36 +15,43 @@ conventions, update it in the same commit.
   0.2.3 needs `pkg_resources` and the old NumPy/SQLAlchemy APIs. Don't lift
   these pins.
 - Python is used only for extraction (`python/`); all statistics are in R
-  (`R/`). Run R scripts from the repo root: `Rscript R/<script>.R`.
+  (`codes/`). Run R scripts from the repo root, e.g.
+  `Rscript codes/r-codes/<script>.R`.
 
 ## Pipeline
 
 ```bash
 uv run python python/extract.py   # -> data/raw/annotations.csv (slow; run once)
-Rscript R/01_clean.R              # -> data/processed/*.csv
-Rscript R/check_data.R            # sanity checks; exits non-zero on failure
-Rscript R/eda.R                   # -> figures/*.pdf, prints numbers used in main.tex
+codes/compileplots.sh        # runs every script below, in order
+Rscript codes/r-codes/clean-data.R     # -> data/processed/*.csv
+Rscript codes/r-codes/check-data.R     # sanity checks; exits non-zero on failure
+Rscript codes/r-codes/summary-*.R      # prints numbers used in main.tex
+Rscript codes/r-codes/eda-summary.R    # prints numbers used in main.tex
+Rscript codes/r-codes/polr-fit.R       # fits the naive PO models; prints numbers used in main.tex
+Rscript codes/plots/eda/<figure>.R     # -> codes/plots/eda/<figure>.pdf
 ```
 
 `data/raw/annotations.csv` is the master file and is never edited by hand.
-Re-run `R/check_data.R` after any change to extraction or cleaning.
+Re-run `codes/r-codes/check-data.R` after any change to extraction or cleaning.
 
-Installing R packages from source (`ordinal`, `car`, and their dependencies)
+Installing R packages from source (`ordinal` and its dependencies)
 needs a Fortran compiler: `sudo pacman -S gcc-fortran`.
 
 ## Report
 
-All LaTeX lives in `core/`: `main.tex` uses `statproj.sty` (title page,
+Code follows the layout of the Palmer penguins project: one script per set of
+numbers in `codes/r-codes/`, and each figure next to its script in
+`codes/plots/<section>/`. The report lives in the repo root: `main.tex` uses `statproj.sty` (title page,
 minted) and `refs.bib` with plain BibTeX, and includes figures from
-`../figures/`. Build from inside `core/`:
+`./codes/plots/`. Build from the repo root:
 
 ```bash
-cd core && latexmk -pdf -shell-escape main.tex
+latexmk -pdf -shell-escape main.tex
 ```
 
-The user's global latexmkrc puts aux files in `core/buildtmp/` (ignored).
-`core/main.pdf` is committed. Numbers in `main.tex` are typed in by hand
-from `R/eda.R` and `R/01_clean.R` output, so update them when the data or scripts change. Do not double-space:
+The user's global latexmkrc puts aux files in `buildtmp/` (ignored).
+`main.pdf` is committed. Numbers in `main.tex` are typed in by hand
+from `codes/r-codes/` output, so update them when the data or scripts change. Do not double-space:
 keep the style's default one-and-a-half spacing. Author, roll number
 (`\rollno`) and date are placeholders in `main.tex`; never hard-code personal
 details in `statproj.sty`.

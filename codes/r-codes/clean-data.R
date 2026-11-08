@@ -7,7 +7,7 @@
 #   median_ties.csv    nodules whose median malignancy fell between two grades
 #
 # Run from the repository root:
-#   Rscript R/01_clean.R
+#   Rscript codes/r-codes/clean-data.R
 
 raw <- read.csv("data/raw/annotations.csv", stringsAsFactors = FALSE)
 
