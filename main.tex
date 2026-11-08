@@ -234,12 +234,23 @@ treating nodules as independent, the likelihood is
 
 The models are fitted by maximising $L$ on the training set with
 \texttt{polr}. All predictors are standardised, so one unit is
-one standard deviation. One nodule with missing solidity is excluded,
-leaving $n = 1808$ for both models. Confidence intervals for the odds
+one standard deviation. Confidence intervals for the odds
 ratios are profile-likelihood intervals, obtained by inverting the
 likelihood ratio test of $H_0 \colon \beta_j = b$ using the
 $\chi^2_1$ limit given by Wilks' theorem, and then exponentiating
 the endpoints.
+
+Wilks' theorem states that, under regularity conditions and if $H_0$
+is true, the likelihood ratio statistic satisfies
+\[
+  \Lambda = 2\Bigl[\sup_{\theta \in \Theta} \ell(\theta)
+  - \sup_{\theta \in \Theta_0} \ell(\theta)\Bigr]
+  \xrightarrow{d} \chi^2_r
+\]
+as $n \to \infty$, where $\ell$ is the log-likelihood and $r$ is the
+number of parameters fixed by $H_0$. This is a large-sample result.
+Here $r = 1$, so the approximate $95\%$ interval for $\beta_j$ is the
+set of values $b$ with $\Lambda(b) \le \chi^2_{1, 0.95} = 3.841$.
 
 \paragraph{Primary Model}
 The fitted model is
