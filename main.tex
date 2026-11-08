@@ -1,0 +1,846 @@
+\documentclass[12pt]{article}
+\usepackage{statproj}
+
+\definecolor{myblue}{HTML}{4c72b0}
+\definecolor{myorange}{HTML}{dd8452}
+\definecolor{mygreen}{HTML}{55a868}
+
+\title{A Log-Linear Regression Analysis of Allometric Scaling and
+Species Effects on Penguin Body Mass}
+\author{Avigyan Chakraborty}
+\date{April, 2026}
+
+\begin{document}
+
+\maketitlepage{\thetitle}{\theauthor}{\thedate}{%
+  placeholder for abstract%
+}
+
+% TODO: change the red color in this
+\makecontents
+
+\section{Introduction}
+
+insert introduction here.
+
+\section{Data Description}
+
+The dataset used in this study is the LIDC-IDRI (Lung Image
+Database Consortium and Image Database Resource Initiative)
+database\cite{armato2011lidc}.
+It contains thoracic CT scans in which up to four radiologists
+outlined each lung nodule of at least $3$\,mm and rated its
+appearance and its likely malignancy.
+
+The unit of analysis is the \emph{nodule}. Geometric features are
+averaged across a nodule's readers and semantic ratings are
+summarised by their median. We use the median because the ratings
+are ordinal, so the gaps between grades have no fixed numerical
+meaning, and because it is less sensitive to a single outlying
+reader than the mean.
+
+The variables used in this study are as follows.
+
+\paragraph{Response}
+\begin{itemize}
+    \ii \textbf{Malignancy (\texttt{mal\_median})}:
+    The median of the readers' ratings, on an ordered scale from
+    $1$ (highly unlikely to be malignant) to $5$
+    (highly suspicious). A median falling between two grades is
+    rounded up, which affects $548$ nodules ($20.8\%$).
+    Each reader's rating is also retained for the latent-grade model.
+    Discrete (ordinal), with support $\{1, 2, 3, 4, 5\}$.
+\end{itemize}
+
+\paragraph{Primary model: geometric features}
+These are computed from the outlines drawn by the radiologists and
+are treated as continuous random variables.
+\begin{itemize}
+    \ii \textbf{Log Volume (\texttt{log\_volume})}:
+    The natural logarithm of the nodule's volume in mm$^3$.
+    The logarithm is used because volume is strongly right-skewed.
+    Continuous, with support $\mathbb{R}$.
+    \ii \textbf{Elongation (\texttt{elongation})}:
+    A value near $1$ means that the nodule is not elongated.
+    Continuous, with support $[0, 1]$.
+    \ii \textbf{Flatness (\texttt{flatness})}:
+    A value near $1$ means that the nodule is not flat.
+    Continuous, with support $[0, 1]$ and a point mass at $0$.
+    \ii \textbf{Solidity (\texttt{solidity})}:
+    The number of voxels in the nodule divided by the number in its
+    convex hull. A low value indicates an irregular outline.
+    Continuous, with support $(0, 1]$.
+    \ii \textbf{Compactness (\texttt{compactness})}:
+    $V^{2/3}/S$, for volume $V$ and surface area $S$.
+    A high value means little surface area relative to volume.
+    Continuous, with support $(0, \infty)$.
+\end{itemize}
+
+\paragraph{Secondary model: primary features and semantic ratings}
+These are ordinal ratings from $1$ to $5$, given by the same
+radiologists who rate malignancy.
+The secondary model adds them to the five
+geometric features above. Since each is a median across readers, all
+five are discrete (ordinal), with support
+$\{1, 1.5, 2, \dots, 4.5, 5\}$.
+\begin{itemize}
+    \ii \textbf{Spiculation (\texttt{spiculation})}:
+    Spiky extensions from the edge, from none to marked.
+    \ii \textbf{Lobulation (\texttt{lobulation})}:
+    Rounded bulges along the edge, from none to marked.
+    \ii \textbf{Margin (\texttt{margin})}:
+    Definition of the edge, from poorly defined to sharp.
+    \ii \textbf{Texture (\texttt{texture})}:
+    Internal density, from non-solid to solid.
+    \ii \textbf{Sphericity (\texttt{sphericity})}:
+    Overall roundness, from linear to round.
+\end{itemize}
+
+The data are split by patient into a training set ($609$ patients,
+$1809$ nodules) and a test set ($261$ patients, $828$ nodules).
+Flatness is exactly $0$ for $45$ training nodules whose outlines lie
+in a single plane.
+
+\subsection{Summary Statistics}
+
+All summary statistics are computed on the training set.
+\Cref{table:summary_all} gives the unstandardised values of the
+predictors, and \cref{table:summary_grades} breaks them down by
+median malignancy grade.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c | c | c | c | c ||}
+    \hline
+    \textbf{Model}
+    & \textbf{Variable} & \textbf{Mean}
+    & \textbf{Minimum}
+    & \textbf{Maximum} & \textbf{Std. Dev.} \\[0.5ex]
+    \hline\hline
+    \multirow{5}{*}{\textbf{Primary}}
+    & \textbf{Log Volume} & 5.118 & 2.442 & 10.345 & 1.394 \\
+    & \textbf{Elongation} & 0.753 & 0.306 & 0.988 & 0.121 \\
+    & \textbf{Flatness} & 0.555 & 0.000 & 0.921 & 0.164 \\
+    & \textbf{Solidity} & 0.795 & 0.228 & 1.000 & 0.106 \\
+    & \textbf{Compactness} & 0.177 & 0.058 & 0.312 & 0.044 \\
+    \hline
+    \multirow{5}{*}{\textbf{Secondary}}
+    & \textbf{Spiculation} & 1.476 & 1.000 & 5.000 & 0.889 \\
+    & \textbf{Lobulation} & 1.572 & 1.000 & 5.000 & 0.883 \\
+    & \textbf{Margin} & 3.899 & 1.000 & 5.000 & 1.138 \\
+    & \textbf{Texture} & 4.363 & 1.000 & 5.000 & 1.202 \\
+    & \textbf{Sphericity} & 3.789 & 1.000 & 5.000 & 0.826 \\
+    \hline
+  \end{tabular}
+  \caption{Overall Summary Statistics ($n = 1809$ training nodules)}
+  \label{table:summary_all}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \resizebox{\textwidth}{!}{%
+    \begin{tabular}{|| c | c | c | c | c | c | c ||}
+      \hline
+      \textbf{Model} & \textbf{Variable}
+      &
+      \begin{tabular}{@{}c@{}}\textbf{Grade 1} \\ \textbf{(233)}
+      \end{tabular}
+      &
+      \begin{tabular}{@{}c@{}}\textbf{Grade 2} \\ \textbf{(378)}
+      \end{tabular}
+      &
+      \begin{tabular}{@{}c@{}}\textbf{Grade 3} \\ \textbf{(823)}
+      \end{tabular}
+      &
+      \begin{tabular}{@{}c@{}}\textbf{Grade 4} \\ \textbf{(239)}
+      \end{tabular}
+      &
+      \begin{tabular}{@{}c@{}}\textbf{Grade 5} \\ \textbf{(136)}
+      \end{tabular} \\[0.5ex]
+      \hline\hline
+      \multirow{5}{*}{\textbf{Primary}}
+      & \textbf{Log Volume} & 4.563 (0.981) & 4.474 (0.935) & 4.779
+      (0.983) & 6.349 (1.269) & 7.744 (1.082) \\
+      & \textbf{Elongation} & 0.749 (0.135) & 0.731 (0.125) & 0.758
+      (0.117) & 0.773 (0.115) & 0.761 (0.109) \\
+      & \textbf{Flatness} & 0.591 (0.150) & 0.511 (0.173) & 0.548
+      (0.167) & 0.584 (0.151) & 0.602 (0.132) \\
+      & \textbf{Solidity} & 0.842 (0.092) & 0.812 (0.092) & 0.808
+      (0.093) & 0.742 (0.104) & 0.676 (0.125) \\
+      & \textbf{Compactness} & 0.184 (0.049) & 0.187 (0.043) & 0.183
+      (0.040) & 0.154 (0.037) & 0.135 (0.031) \\
+      \hline
+      \multirow{5}{*}{\textbf{Secondary}}
+      & \textbf{Spiculation} & 1.172 (0.645) & 1.200 (0.632) & 1.394
+      (0.766) & 1.795 (0.930) & 2.699 (1.243) \\
+      & \textbf{Lobulation} & 1.255 (0.700) & 1.300 (0.728) & 1.509
+      (0.819) & 1.933 (0.878) & 2.618 (0.970) \\
+      & \textbf{Margin} & 4.674 (0.793) & 3.971 (1.148) & 3.756
+      (1.159) & 3.669 (1.076) & 3.643 (1.011) \\
+      & \textbf{Texture} & 4.880 (0.560) & 4.344 (1.253) & 4.197
+      (1.323) & 4.324 (1.139) & 4.603 (0.893) \\
+      & \textbf{Sphericity} & 4.043 (0.924) & 3.810 (0.877) & 3.779
+      (0.781) & 3.653 (0.790) & 3.599 (0.735) \\
+      \hline
+  \end{tabular}}
+  \caption{Mean (Std. Dev.) by Median Malignancy Grade
+  (number of training nodules in brackets)}
+  \label{table:summary_grades}
+\end{table}
+
+\subsection{Data Source}
+
+The dataset used in this study is the LIDC-IDRI
+database\cite{armato2011lidc}, hosted by The Cancer Imaging
+Archive\cite{clark2013tcia} at
+\href{https://www.cancerimagingarchive.net/collection/lidc-idri/}
+{LIDC-IDRI (TCIA)}.
+The full image collection is about $133$\,GB, but the radiologists'
+annotations are bundled, already parsed, with the Python library
+\texttt{pylidc}\cite{hancock2016pylidc}. Every quantity used in
+this project is computed from these annotations with
+\texttt{pylidc} version $0.2.3$, so no CT images were downloaded.
+
+\section{Model Specification}
+
+\subsection{Logistic Regression Model (Naive Proportional Odds)}
+
+\paragraph{Methodology}
+Let $Y_i \in \{1, \dots, 5\}$ be the median malignancy grade of nodule
+$i$, and let $x_i$ be its vector of predictors. Since $Y_i$ is ordered,
+we model its cumulative probabilities with a proportional odds model
+(an ordinal logistic regression):
+\[
+  \operatorname{logit} P(Y_i \le k \mid x_i)
+  = \alpha_k - x_i\trans\beta, \qquad k = 1, \dots, 4,
+\]
+where $\alpha_1 < \dots < \alpha_4$ are thresholds. A positive
+$\beta_j$ means that a larger $x_{ij}$ shifts a nodule towards higher
+grades. The odds of being above any given grade are multiplied by
+$e^{\beta_j}$ for each one-unit increase in $x_{ij}$, and this factor
+is assumed to be the same at every threshold. The model is
+\emph{naive} because it takes the median as the true grade and ignores
+disagreement between readers.
+
+Writing $F(t) = e^t / (1 + e^t)$ for the logistic distribution
+function, with $\alpha_0 = -\infty$ and $\alpha_5 = \infty$, and
+treating nodules as independent, the likelihood is
+\[
+  L(\alpha, \beta)
+  = \prod_{i=1}^{n} \prod_{k=1}^{5}
+  \bigl[ F(\alpha_k - x_i\trans\beta)
+  - F(\alpha_{k-1} - x_i\trans\beta) \bigr]^{\mathbf{1}\{Y_i = k\}}.
+\]
+
+The models are fitted by maximising $L$ on the training set with
+\texttt{polr}. All predictors are standardised, so one unit is
+one standard deviation. One nodule with missing solidity is excluded,
+leaving $n = 1808$ for both models. Confidence intervals for the odds
+ratios are profile-likelihood intervals, obtained by inverting the
+likelihood ratio test of $H_0 \colon \beta_j = b$ using the
+$\chi^2_1$ limit given by Wilks' theorem, and then exponentiating
+the endpoints.
+
+\paragraph{Primary Model}
+The fitted model is
+\begin{align*}
+  \operatorname{logit} \hat{P}(Y_i \le k \mid x_i) = \hat{\alpha}_k
+  - \bigl(&1.330\cdot\texttt{log\_volume}
+    + 0.333\cdot\texttt{elongation} \\
+    &- 0.173\cdot\texttt{flatness}
+    - 0.342\cdot\texttt{solidity} \\
+  &+ 0.047\cdot\texttt{compactness}\bigr),
+\end{align*}
+with $\hat{\alpha} = (-2.503, -1.108, 1.674, 3.488)$ and maximised
+log-likelihood $-2155.134$. The estimates are given in
+\cref{table:polr_primary}.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c | c | c | c ||}
+    \hline
+    \textbf{Predictor}
+    & $\hat{\beta}$
+    & \textbf{Std. Error}
+    & \textbf{Odds Ratio}
+    & \textbf{$95\%$ CI} \\[0.5ex]
+    \hline\hline
+    \texttt{log\_volume} & 1.330 & 0.065 & 3.781 & (3.335, 4.296) \\
+    \texttt{elongation} & 0.333 & 0.055 & 1.395 & (1.253, 1.555) \\
+    \texttt{flatness} & -0.173 & 0.053 & 0.841 & (0.757, 0.934) \\
+    \texttt{solidity} & -0.342 & 0.065 & 0.710 & (0.625, 0.806) \\
+    \texttt{compactness} & 0.047 & 0.059 & 1.048 & (0.934, 1.175) \\
+    \hline
+  \end{tabular}
+  \caption{Primary Proportional Odds Model}
+  \label{table:polr_primary}
+\end{table}
+
+\paragraph{Interpretation}
+Each odds ratio is for a one standard deviation increase in that
+predictor, holding the others constant.
+\begin{itemize}
+    \ii \textbf{Size:} Log volume has by far the largest effect. One
+    standard deviation, roughly a fourfold increase in volume,
+    multiplies the odds of a higher malignancy grade by $3.78$.
+    \ii \textbf{Solidity:} A more solid nodule has lower odds of a
+    higher grade (odds ratio $0.71$), so irregular outlines are rated
+    as more suspicious.
+    \ii \textbf{Elongation and Flatness:} Elongation is close to $1$
+    for a nodule that is not elongated, so an odds ratio of $1.40$
+    means that more elongated nodules have lower odds of a higher
+    grade. Flatness works in the other direction: its odds ratio of
+    $0.84$ means that flatter nodules have higher odds.
+    \ii \textbf{Compactness:} The confidence interval contains $1$, so
+    the data are compatible with no effect once the other predictors
+    are included.
+\end{itemize}
+
+\paragraph{Secondary Model}
+The geometric features only describe the outline of a nodule, whereas
+radiologists also judge its appearance on the scan. We therefore add
+the semantic ratings to measure how much this assessment explains
+beyond geometry: spiculation, lobulation and margin describe the edge
+in terms that radiologists themselves use, texture records internal
+density, which the outlines cannot capture, and sphericity gives a
+reader's view of overall shape. Adding these ratings gives
+\begin{align*}
+  \operatorname{logit} \hat{P}(Y_i \le k \mid x_i) = \hat{\alpha}_k
+  - \bigl(&1.210\cdot\texttt{log\_volume}
+    + 0.321\cdot\texttt{elongation} \\
+    &- 0.065\cdot\texttt{flatness}
+    - 0.160\cdot\texttt{solidity} \\
+    &+ 0.002\cdot\texttt{compactness}
+    + 0.346\cdot\texttt{spiculation} \\
+    &+ 0.091\cdot\texttt{lobulation}
+    - 0.280\cdot\texttt{margin} \\
+    &+ 0.063\cdot\texttt{texture}
+  + 0.002\cdot\texttt{sphericity}\bigr),
+\end{align*}
+with $\hat{\alpha} = (-2.572, -1.144, 1.735, 3.617)$ and maximised
+log-likelihood $-2108.642$. The estimates are given in
+\cref{table:polr_secondary}.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c | c | c | c ||}
+    \hline
+    \textbf{Predictor}
+    & $\hat{\beta}$
+    & \textbf{Std. Error}
+    & \textbf{Odds Ratio}
+    & \textbf{$95\%$ CI} \\[0.5ex]
+    \hline\hline
+    \texttt{log\_volume} & 1.210 & 0.067 & 3.352 & (2.942, 3.828) \\
+    \texttt{elongation} & 0.321 & 0.056 & 1.379 & (1.237, 1.539) \\
+    \texttt{flatness} & -0.065 & 0.056 & 0.937 & (0.840, 1.045) \\
+    \texttt{solidity} & -0.160 & 0.069 & 0.852 & (0.744, 0.976) \\
+    \texttt{compactness} & 0.002 & 0.059 & 1.002 & (0.893, 1.126) \\
+    \texttt{spiculation} & 0.346 & 0.067 & 1.413 & (1.241, 1.613) \\
+    \texttt{lobulation} & 0.091 & 0.066 & 1.096 & (0.964, 1.246) \\
+    \texttt{margin} & -0.280 & 0.074 & 0.756 & (0.654, 0.874) \\
+    \texttt{texture} & 0.063 & 0.067 & 1.065 & (0.933, 1.215) \\
+    \texttt{sphericity} & 0.002 & 0.051 & 1.002 & (0.907, 1.107) \\
+    \hline
+  \end{tabular}
+  \caption{Secondary Proportional Odds Model}
+  \label{table:polr_secondary}
+\end{table}
+
+\paragraph{Interpretation}
+\begin{itemize}
+    \ii \textbf{Semantic Ratings:} More spiculated nodules have higher
+    odds of a higher grade (odds ratio $1.41$), and nodules with
+    sharper margins have lower odds ($0.76$). The confidence intervals
+    for lobulation, texture and sphericity contain $1$.
+    \ii \textbf{Geometric Features:} Size remains the largest effect
+    (odds ratio $3.35$), and elongation barely changes ($1.38$). The
+    solidity effect moves towards $1$ ($0.85$), and the interval for
+    flatness now contains $1$, which suggests that the ratings capture
+    some of the same information about shape.
+    \ii \textbf{Circularity:} The semantic ratings come from the same
+    radiologists who rate malignancy, so these associations may partly
+    reflect a reader's overall impression of a nodule. The primary
+    model therefore remains our main result.
+\end{itemize}
+
+\section{Statistical Inference}
+
+\subsection{Confidence Intervals}
+
+In multiple linear regression,
+estimating the point values for the coefficients
+$(\hat{\beta}_i)$ provides a single best guess for the
+population parameters. However,
+to account for sampling variability and quantify the
+precision of these estimates, we construct $95\%$
+confidence intervals for each predictor, the mean response,
+and future individual observations.
+
+\subsubsection{Coefficient Intervals}
+The true parameter $(\hat{\beta}_i)$ is estimated to fall
+within the following interval with a $95\%$ level of confidence:
+\[
+  \hat{\beta}_i \pm t_{{\alpha}/{2}}(n-p-1)\cdot SE(\hat{\beta}_i)
+.\]
+Plugging in the values, we derive the following interval estimates:
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c | c c ||}
+    \hline
+    \textbf{Predictor Variable}
+    & \textbf{Estimate}
+    & \textbf{Lower Bound ($2.5\%$)}
+    & \textbf{Upper Bound ($97.5\%$)} \\[0.5ex]
+    \hline\hline
+    \texttt{Intercept} ($\hat{\beta}_0$) & 0.0759 & -1.2559 & 1.4077 \\
+    $\log(\texttt{Flipper\_Length})$ ($\hat{\beta}_1$) & 0.9036 &
+    0.6099 & 1.1972 \\
+    $\log(\texttt{Culmen\_Length})$ ($\hat{\beta}_2$) & 0.4364 &
+    0.2864 & 0.5865 \\
+    $\log(\texttt{Culmen\_Depth})$ ($\hat{\beta}_3$) & 0.6181 &
+    0.4598 & 0.7763 \\
+    \texttt{Is\_Gen} ($\hat{\beta}_4$) & 0.2341 & 0.1648 & 0.3034 \\
+    \texttt{Is\_Chin} ($\hat{\beta}_5$) & -0.1195 & -0.1592 & -0.0798 \\
+    \hline
+  \end{tabular}
+  \caption{$95\%$ Confidence Intervals for the Regression Parameters}
+\end{table}
+
+Because both the response variable and the continuous predictors were
+log-transformed, the coefficients are interpreted as
+elasticities, representing the expected percentage change in
+body mass for a $1\%$ increase in the predictor,
+holding all other variables constant.
+\begin{itemize}
+    \ii \textbf{Flipper Length:} We are $95\%$ confident that for every $1\%$
+    increase in a penguin's flipper length,
+    its expected body mass increases by between $0.61\%$ and $1.20\%$.
+
+    \ii \textbf{Culmen Length:} We are $95\%$ confident that a $1\%$
+    increase in culmen length corresponds to an expected body mass
+    increase of between $0.29\%$ and $0.59\%$.
+
+    \ii \textbf{Culmen Depth:} We are $95\%$ confident that a $1\%$
+    increase in culmen depth is associated with a
+    $0.46\%$ to $0.78\%$ increase in expected body mass.
+
+    \ii \textbf{Species Effects (\texttt{Is\_Gen}):}
+    We are $95\%$ confident that,
+    holding all physical measurements constant,
+    a Gentoo penguin will weigh between $17.9\%$ and $35.4\%$
+    more than the baseline Adelie species.
+
+    \ii \textbf{Species Effects (\texttt{Is\_Chin}):}
+    We are $95\%$ confident that,
+    holding all physical measurements constant,
+    a Chinstrap penguin will weigh between $7.7\%$ and $14.7\%$
+    less than the Adelie species.
+
+    \ii \textbf{Intercept:} The $95\%$ confidence interval
+    for the intercept ranges from $-1.2559$ to $1.4077$.
+    The intercept corresponds to the expected
+    log body mass of a baseline Adelie penguin
+    when all log-transformed predictors are equal to zero.
+    This implies that the original
+    measurements are equal to 1 (since $\log(1) = 0$),
+    which is not biologically meaningful.
+    Thus, the intercept has limited practical
+    interpretation in this context.
+\end{itemize}
+
+\subsubsection{Confidence Intervals for the Mean Response}
+Let $x_0$ be
+a column vector containing a specific set of predictor
+values. To estimate the expected value $\mathbb{E}[\log(\texttt{Body\_M})]$ at
+$x_0$, we utilize the matrix $X$
+to account for the covariance among predictors. The $95\%$
+confidence interval for the mean response is given by:
+\[
+  \hat{y}_0 \pm t_{\alpha/2}(n-p-1) \cdot
+  \sqrt{\text{MSE} \cdot x_0^T
+  (X^T X)^{-1} x_0}
+.\]
+Here, MSE is the Mean Squared Error, estimating the error
+variance $\sigma^2$.
+
+\paragraph{Application: Expected Mass Across Species}
+To isolate the structural effects of the categorical
+variables, we construct a theoretical standardized penguin
+utilizing the mean of the log-transformed morphological
+measurements. We then predict the expected $\log(\texttt{Body\_M})$
+across all three species profiles, keeping these baseline
+log-dimensions mathematically constant.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c | c c ||}
+    \hline
+    \textbf{Species}
+    & \textbf{Point Estimate}
+    & \textbf{Lower Bound}
+    & \textbf{Upper Bound} \\
+    \hline\hline
+    \textbf{Adelie (Baseline)} & 8.2651 & 8.2337 & 8.2964 \\
+    \textbf{Chinstrap} & 8.1456 & 8.1178 & 8.1733 \\
+    \textbf{Gentoo} & 8.4992 & 8.4581 & 8.5402 \\
+    \hline
+  \end{tabular}
+  \caption{$95\%$ Confidence Intervals for Mean Response}
+\end{table}
+
+Observing the Chinstrap and Gentoo confidence bounds,
+we see parallel shifts relative to the Adelie baseline.
+Because the input traits are identical, we are $95\%$
+confident that the average log body mass of a Gentoo
+population will always remain strictly higher than an
+identically proportioned Adelie population, whereas a
+Chinstrap population will remain strictly lower.
+
+\subsubsection{Prediction Intervals}
+While the confidence interval predicts
+$\mathbb{E}[\log(\texttt{Body\_M})]$
+for all penguins with a specific set of traits, the
+prediction interval predicts the exact
+$\log(\texttt{Body\_M})$
+of a
+single, individual new penguin. Because individual
+observations naturally vary around the population mean,
+predicting a single point carries additional irreducible
+uncertainty. The $95\%$ prediction interval
+of $\log(\texttt{Body\_M})$ is mathematically
+wider and is expressed as:
+\[
+  \hat{y}_0 \pm t_{\alpha/2}(n-p-1) \cdot
+  \sqrt{\text{MSE} \cdot \left(1 + x_0^T
+  (X^T X)^{-1} x_0\right)}
+.\]
+The addition of $1$ inside the parenthetical term accounts
+for the variance of the residual error ($\sigma^2$)
+associated with drawing a new, random individual from the
+population.
+
+\paragraph{Application: Predicting Individual Penguins}
+Using the same theoretical baseline log-dimensions, we now
+calculate the intervals for randomly sampling a single new
+penguin from each respective species.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c | c c ||}
+    \hline
+    \textbf{Species}
+    & \textbf{Point Estimate}
+    & \textbf{Lower Bound}
+    & \textbf{Upper Bound} \\
+    \hline\hline
+    \textbf{Adelie (Baseline)} & 8.2651 & 8.1107 & 8.4195 \\
+    \textbf{Chinstrap} & 8.1456 & 7.9918 & 8.2993 \\
+    \textbf{Gentoo} & 8.4992 & 8.3425 & 8.6558 \\
+    \hline
+  \end{tabular}
+  \caption{$95\%$ Prediction Intervals for New Observations}
+\end{table}
+
+As mathematically expected, these prediction intervals are
+significantly wider than their corresponding confidence
+intervals. This increased width explicitly accounts for the
+inherent random variation ($\sigma^2$) between individual
+penguins, even when they belong to the exact same species
+and share identical physical measurements.
+
+\subsection{Hypothesis Testing}
+To formally evaluate the explanatory power and structural
+validity of our multiple log-linear regression model, we
+conduct three distinct tiers of hypothesis testing.
+
+\subsubsection{Overall Model Significance}
+The global F-test evaluates whether the model as a whole
+explains a statistically significant portion of the variance
+in expected log body mass. To do this, we compare the full
+model against a restricted, intercept-only baseline model.
+\begin{itemize}
+    \ii \textbf{Null Hypothesis ($H_0$):} $\beta_1 = \beta_2 =
+    \beta_3 = \beta_4 = \beta_5 = 0$. None of the predictors
+    have a significant linear relationship with the response.
+
+    \ii \textbf{Alternative Hypothesis ($H_1$):} At least one
+    $\beta_i \neq 0$ (for $i \in \{1,2,3,4,5\}$).
+\end{itemize}
+The test statistic
+evaluates the reduction in SSE when
+all predictors are added to the intercept model:
+\[
+  F_0 = \frac{{(\text{SSE}_{\text{restricted}} -
+    \text{SSE}_{\text{full}})} / {\mathrm{df}_{\text{restricted}} -
+  \mathrm{df}_{\text{full}}}}{\text{SSE}_{\text{full}}
+  / \mathrm{df}_{\text{full}}}
+.\]
+For the global test, the restricted intercept-only model
+has $\mathrm{df} = n-1$, and the full model containing $5$ predictors
+has $\mathrm{df} = n-6$. Evaluating these degrees of freedom, the
+formula simplifies to:
+\[
+  F_0 = \frac{(\text{SSE}_{\text{restricted}} -
+  \text{SSE}_{\text{full}}) / 5}{\text{SSE}_{\text{full}}
+  / 336}
+.\]
+
+\paragraph{Calculation and Inference}
+Evaluating the global model yields an F-statistic of
+$F_0 = 340.7279$, which corresponds to a p-value strictly
+less than $0.001$. Because
+this p-value is significantly smaller than our significance
+level ($\alpha = 0.05$), we reject the null hypothesis. We
+conclude with $95\%$ confidence that the regression model
+as a whole explains a statistically significant proportion
+of the variance in expected log body mass.
+
+\subsubsection{Individual Parameter Significance}
+While the global F-test evaluates the entire model, marginal
+t-tests evaluate the independent contribution of each
+specific predictor, holding all other variables constant.
+\begin{itemize}
+    \ii \textbf{Null Hypothesis ($H_0$):} $\beta_i = 0$. The
+    $i$-th predictor does not significantly affect expected
+    log body mass.
+
+    \ii \textbf{Alternative Hypothesis ($H_1$):} $\beta_i \neq 0$.
+\end{itemize}
+The test statistic is calculated by dividing the parameter
+estimate by its standard error:
+\[
+  t_0 = \frac{\hat{\beta}_i}{\text{SE}(\hat{\beta}_i)}
+.\]
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c | c | c ||}
+    \hline
+    \textbf{Predictor Variable}
+    & \textbf{Estimate ($\hat{\beta}_i$)}
+    & \textbf{t-statistic}
+    & \textbf{p-value} \\
+    \hline\hline
+    \texttt{Intercept} & 0.0759 & 0.112 & 0.911 \\
+    $\log(\texttt{Flipper\_Length})$ & 0.9036 & 6.053 & $<0.001$ \\
+    $\log(\texttt{Culmen\_Length})$ & 0.4364 & 5.722 & $<0.001$ \\
+    $\log(\texttt{Culmen\_Depth})$ & 0.6181 & 7.682 & $<0.001$ \\
+    \texttt{Is\_Gen} & 0.2341 & 6.641 & $<0.001$ \\
+    \texttt{Is\_Chin} & -0.1195 & -5.925 & $<0.001$ \\
+    \hline
+  \end{tabular}
+  \caption{Marginal t-Tests for Individual Parameters}
+\end{table}
+
+\paragraph{Inference}
+As shown in the table, with the exception of the intercept,
+every morphological and categorical predictor yields a
+p-value strictly less than $0.001$. This strongly rejects
+the null hypotheses at the $\alpha = 0.05$ level, confirming
+that each variable is a highly significant independent
+predictor of log body mass.
+
+\subsubsection{Joint Significance of Categorical Variables}
+To rigorously justify the inclusion of the categorical
+species indicators, we test their joint significance against
+a restricted model containing only the physical measurements.
+\begin{itemize}
+    \ii \textbf{Null Hypothesis ($H_0$):} $\beta_4 = \beta_5 = 0$.
+    The species classifications provide no additional
+    explanatory power beyond physical dimensions.
+
+    \ii \textbf{Alternative Hypothesis ($H_1$):} At least one
+    species parameter is non-zero.
+\end{itemize}
+We use the same F-statistic as the global test:
+\[
+  F_0 = \frac{{(\text{SSE}_{\text{restricted}} -
+    \text{SSE}_{\text{full}})} / {\mathrm{df}_{\text{restricted}} -
+  \mathrm{df}_{\text{full}}}}{\text{SSE}_{\text{full}}
+  / \mathrm{df}_{\text{full}}}
+.\]
+For our specific partial test, the restricted model contains
+$3$ continuous predictors ($\mathrm{df} = n-4$), and the full model
+adds $2$ categorical indicators ($\mathrm{df} = n-6$). Evaluating
+the degrees of freedom yields:
+\[
+  F_0 = \frac{(\text{SSE}_{\text{restricted}} -
+  \text{SSE}_{\text{full}}) / 2}{\text{SSE}_{\text{full}}
+  / 336}
+.\]
+
+\paragraph{Calculation and Inference}
+Evaluating the joint addition of the species variables
+yields an F-statistic of $F_0 = 95.7775$ with a
+corresponding p-value strictly less than $0.001$.
+Because this p-value is significantly
+smaller than $\alpha = 0.05$, we firmly reject the null
+hypothesis. This mathematically suggests that the categorical
+species indicators provide a highly significant improvement
+to the model's predictive power, reasonably justifying their
+inclusion over a model based purely on physical dimensions.
+
+\subsection{Model Diagnostics}
+\label{subsection:goodness_of_fit}
+
+To conclude our analysis, we must verify both the
+explanatory power of the model and the structural validity
+of the Ordinary Least Squares (OLS) assumptions in log-space.
+
+\subsubsection{Goodness of Fit}
+The explanatory power of the model is measured by the
+proportion of total variance in $\log(\texttt{Body\_M})$ that is
+captured by our selected predictors.
+\begin{itemize}
+    \ii \textbf{Multiple $R^2$ ($0.8353$):} Our model explains
+    $83.53\%$ of the sample variance in the observed
+    $\log(\texttt{Body\_M})$.
+    \ii \textbf{Adjusted $R^2$ ($0.8328$):} Because adding
+    parameters mathematically inflates the raw $R^2$. Our high
+    adjusted $R^2$ suggests that the inclusion of the categorical
+    species indicators provides a genuine increase in predictive
+    accuracy.
+\end{itemize}
+
+\subsubsection{Residual Analysis}
+A regression model is only mathematically valid if its
+unobserved error terms ($\eps$) are random
+and independent.
+
+\begin{itemize}
+    \ii \textbf{Residuals vs. Fitted:} The plotted residuals
+    display a random scatter clustered tightly around the
+    horizontal zero-line with no distinct funnels or curves.
+    This suggests that the variance of the errors is constant
+    and that the log-linear structural
+    relationship is appears appropriate.
+    % \begin{figure}[H]
+    %   \centering
+    %   \includegraphics[width=0.6\textwidth,keepaspectratio]{./codes/plots/model-testing/res-vs-fit.pdf}
+    %   \caption{Residuals vs. Fitted}
+    % \end{figure}
+
+    \ii \textbf{Normal Q-Q Plot:} The standardized residuals
+    tightly hug the theoretical $45$-degree diagonal line,
+    visually indicating that the error terms are normally
+    distributed.
+    % \begin{figure}[H]
+    %   \centering
+    %   \includegraphics[width=0.6\textwidth,keepaspectratio]{./codes/plots/model-testing/qq-plot.pdf}
+    %   \caption{Normal Q-Q Plot}
+    % \end{figure}
+\end{itemize}
+
+\subsubsection{Normality Assessment}
+To rigorously prove the visual assumption of normality
+established by the Q-Q plot, we apply the Pearson Chi-Square
+Goodness-of-Fit test to the model's standardized residuals.
+
+By standardizing the residuals ($\frac{\eps - \bar{\eps}}{s}$),
+we map them directly to a standard Normal distribution
+curve, $N(0,1)$. We slice this theoretical curve into $k=10$
+regions with equal probabilities, meaning the expected probability
+of a residual falling into any specific region is exactly
+$E_i = 10\%$.
+
+We then map our actual observed standardized residuals
+($O_i$) into these regions. The test statistic evaluates the
+difference between the observed counts and the theoretically
+expected counts:
+\[
+  \chi^2 = \sum_{i=1}^{k} \frac{(O_i - E_i)^2}{E_i}
+.\]
+
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=0.8\textwidth,keepaspectratio]{./codes/plots/model-testing/pearson-chisq.pdf}
+%   \caption{Chi-Square Goodness-of-Fit Test for Normality}
+% \end{figure}
+
+\paragraph{Calculation and Inference}
+Evaluating the standardized residuals across $10$ equiprobable
+bins yields a test statistic of $\chi^2 = 9.6374$. With
+$k-3 = 7$ degrees of freedom (accounting for the estimation
+of the mean and variance), this corresponds to a p-value of
+$0.2101$.
+
+Because this p-value is strictly greater than our significance
+threshold ($\alpha = 0.05$), we \textbf{fail to reject} the
+null hypothesis. This mathematically suggests that our residuals
+do not significantly deviate from a normal distribution.
+Consequently, all confidence intervals, prediction intervals,
+and hypothesis tests calculated in the preceding sections are
+reasonably supported.
+
+\section{Conclusion}
+
+This study developed a multiple linear regression model to
+explain penguin body mass using flipper length, culmen
+length, culmen depth, and species. Motivated by allometric
+scaling, a log transformation was applied to obtain a
+log-linear model that better captures the underlying
+relationships.
+
+The fitted model demonstrated strong explanatory power,
+accounting for about 83.5\% of the variation in log body
+mass. All predictors, except the intercept, were highly
+significant. Flipper length, culmen length, and culmen depth
+each showed a positive association with body mass, while the
+species indicators captured meaningful differences among
+penguin species.
+
+The inferential results supported the usefulness of the
+model. The overall F-test confirmed statistical significance,
+and the joint test showed that species provides additional
+explanatory power beyond physical measurements. Confidence
+and prediction intervals were consistent with the fitted
+model.
+
+Diagnostic analysis indicated that the regression assumptions
+are reasonably satisfied. Residual plots showed no major
+patterns, the Q-Q plot suggested approximate normality, and
+the chi-square test did not detect significant deviations.
+Overall, the model provides both strong predictive
+performance and a meaningful representation of the
+relationship between body mass and morphological traits.
+
+\appendix
+\section{Appendix}
+
+\subsection{Dataset}
+
+The dataset used in this study is the
+Palmer Penguins dataset\cite{palmerpenguins},
+originally collected by Kristen B.\ Gorman and made publicly
+available by Allison Marie Horst, Alison Presmanes Hill, and
+Kristen B.\ Gorman.
+
+It can be accessed through the following sources:
+\begin{itemize}
+  \item GitHub:
+    \href{https://github.com/allisonhorst/palmerpenguins}
+    {github.com/allisonhorst/palmerpenguins}
+
+  \item Kaggle:
+    \href{https://www.kaggle.com/datasets/parulpandey/palmer-archipelago-antarctica-penguin-data}
+    {kaggle.com/datasets/parulpandey/palmer-archipelago-antarctica-penguin-data}
+\end{itemize}
+
+\subsection{Code}
+
+The code used in this project is divided based on functionality:
+\begin{itemize}
+  \item R Code (Computation and Model Fitting):
+    \href{https://github.com/Bubu-Droid/palmer-penguins-lin-reg-sem-2/tree/main/codes/r-codes}
+    {R Code Link}
+
+  \item Python Code (Visualization and Plotting):
+    \href{https://github.com/Bubu-Droid/palmer-penguins-lin-reg-sem-2/tree/main/codes/plots}
+    {Python Code Link}
+\end{itemize}
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
