@@ -987,6 +987,87 @@ radiologists.
     parameters.
 \end{itemize}
 
+\section{Policy Interpretation}
+
+Most lung nodules are benign, and radiologist time is limited in public health
+systems. We therefore ask whether a model could help prioritise nodules for
+review. This is a second-reader setting: the model would decide which nodules
+are reviewed first, not which are reviewed at all, and it would not replace a
+radiologist.
+
+\subsection{A Triage Rule}
+
+We flag nodule $i$ for priority review if its predicted probability of a
+high grade exceeds a threshold:
+\[
+  P(Y_i \ge 4 \mid x_i) > \tau.
+\]
+The threshold is chosen on the training set as the largest value reaching
+$90\%$ sensitivity, and is then applied unchanged to the test set. Sensitivity
+is the share of nodules with grade at least $4$ that are flagged, workload is
+the share of all nodules flagged, and precision is the share of flagged
+nodules with grade at least $4$. In the test set, $161$ of the $827$ nodules
+($19.5\%$) have grade at least $4$. For the EM model, the probability is taken
+on the rating scale.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c | c | c | c | c ||}
+    \hline
+    \textbf{Model} & $\tau$ & \textbf{Sensitivity} & \textbf{Workload}
+    & \textbf{Precision} & \textbf{Missed} \\[0.5ex]
+    \hline\hline
+    Naive Primary & 0.139 & 0.913 & 0.470 & 0.378 & 14 \\
+    Naive Secondary & 0.146 & 0.894 & 0.426 & 0.409 & 17 \\
+    EM & 0.147 & 0.907 & 0.441 & 0.400 & 15 \\
+    \hline
+  \end{tabular}
+  \caption{Triage Rule on the Test Set}
+  \label{table:triage}
+\end{table}
+
+\subsection{Recommendation}
+
+Under the naive primary rule, a radiologist reviewing the flagged nodules first
+would see $91.3\%$ of the high-grade nodules within the first $47.0\%$ of
+cases. About $38\%$ of flagged nodules are high grade, roughly twice the
+rate in the test set. So although the models predict exact grades poorly, their
+probabilities are still useful for ordering nodules.
+
+\begin{itemize}
+    \ii We recommend the naive primary model as the starting point for a
+    triage tool. It is the simplest model and needs no semantic ratings, and
+    the small differences in \cref{table:triage} are not enough to prefer a
+    more complex model.
+    \ii The naive secondary model should not be used for triage, as its
+    semantic ratings require the radiologist review that triage is meant to
+    prioritise.
+    \ii The rule should never be used to dismiss a nodule. It misses $14$ of
+    the $161$ high-grade test nodules, and each of these should still receive a
+    routine review.
+\end{itemize}
+
+\subsection{Limitations}
+
+\begin{itemize}
+    \ii \textbf{Suspicion, not diagnosis:} LIDC-IDRI malignancy is radiologists'
+    suspicion rather than a pathology-confirmed diagnosis, so the rule predicts
+    expert opinion, not cancer. The Cancer Imaging Archive holds diagnosis data
+    for a small subset of patients, which could be used for external validation.
+    \ii \textbf{Dependence on drawn outlines:} Our geometric features come from
+    outlines drawn by radiologists. A working tool would need automatic
+    segmentation, whose performance we have not assessed.
+    \ii \textbf{Missing features:} We use no intensity-based features, and
+    calcification, a strong sign of a benign nodule, is not in the model.
+    \ii \textbf{Limited certainty:} The results have no confidence intervals,
+    and the $90\%$ sensitivity target is an illustrative choice. A
+    real deployment would
+    need to set it based on the clinical cost of a missed nodule.
+    \ii \textbf{Generalisation:} LIDC-IDRI is a research dataset from a small
+    number of centres in the United States, so its use in a different setting,
+    such as Indian public hospitals, is untested.
+\end{itemize}
+
 \section{Conclusion}
 
 This study developed a multiple linear regression model to
