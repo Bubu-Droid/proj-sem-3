@@ -3,7 +3,9 @@
 # Run from the repository root:
 #   Rscript codes/r-codes/summary-grades.R
 
-data <- read.csv("data/processed/nodules_train.csv", stringsAsFactors = FALSE)
+data <- read.csv("data/processed/nodules_train_trimmed.csv", stringsAsFactors = FALSE)
+# Nodule 997_0 has no ratings left, so it has no median
+data <- data[!is.na(data$mal_median), ]
 
 PRIMARY <- c("log_volume", "elongation", "flatness", "solidity", "compactness")
 SECONDARY <- c("spiculation", "lobulation", "margin", "texture", "sphericity")

@@ -7,13 +7,13 @@
 library(MASS)
 library(ordinal)
 
-data <- read.csv("data/processed/nodules_train.csv", stringsAsFactors = FALSE)
+data <- read.csv("data/processed/nodules_train_trimmed.csv", stringsAsFactors = FALSE)
 
 PRIMARY <- c("log_volume", "elongation", "flatness", "solidity", "compactness")
 SECONDARY <- c("spiculation", "lobulation", "margin", "texture", "sphericity")
 
 # Same nodules as polr-fit.R
-data <- data[complete.cases(data[c(PRIMARY, SECONDARY)]), ]
+data <- data[complete.cases(data[c(PRIMARY, SECONDARY, "mal_median")]), ]
 cat("Nodules:", nrow(data), "\n\n")
 
 data[c(PRIMARY, SECONDARY)] <- scale(data[c(PRIMARY, SECONDARY)])

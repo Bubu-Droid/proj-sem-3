@@ -6,13 +6,14 @@
 
 library(MASS)
 
-data <- read.csv("data/processed/nodules_train.csv", stringsAsFactors = FALSE)
+data <- read.csv("data/processed/nodules_train_trimmed.csv", stringsAsFactors = FALSE)
 
 PRIMARY <- c("log_volume", "elongation", "flatness", "solidity", "compactness")
 SECONDARY <- c("spiculation", "lobulation", "margin", "texture", "sphericity")
 
-# Same nodules in both models, so that they can be compared later
-data <- data[complete.cases(data[c(PRIMARY, SECONDARY)]), ]
+# Same nodules in both models, so that they can be compared later. Nodule 997_0
+# has no ratings left, so it has no median.
+data <- data[complete.cases(data[c(PRIMARY, SECONDARY, "mal_median")]), ]
 cat("Nodules:", nrow(data), "\n\n")
 
 data[c(PRIMARY, SECONDARY)] <- scale(data[c(PRIMARY, SECONDARY)])
