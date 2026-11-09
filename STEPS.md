@@ -156,6 +156,7 @@ Base R only. Writes to `data/processed/`:
 |---|---|
 | `nodules.csv` | Master nodule table: every column below plus `calcification`, `internalStructure` and `split` |
 | `nodules_train.csv`, `nodules_test.csv` | Modelling tables (no nominal ratings, no `split`) |
+| `nodules_train_trimmed.csv` | Training table without outlying ratings, used by the EM model |
 | `median_ties.csv` | Nodules whose median malignancy fell between two grades |
 
 ### 3.1 Decide which features are predictors
@@ -244,6 +245,8 @@ Repeat with semantic features added; report the comparison in one table.
 Script: `codes/r-codes/em-fit.R`. This is the core of the extension (Phase 4 of `PLAN.md`).
 
 ### 5.1 The model
+
+Fit on `data/processed/nodules_train_trimmed.csv`, which drops training ratings at least 2 grades from their nodule's unrounded median, and disclose this in the abstract. The naive models and the test set keep all ratings. The rule was chosen because a first fit with all ratings gave implausible latent classes. Because it reduces measured disagreement, do not use $\hat\pi$ to make claims about reader reliability.
 
 - Latent true grade $Z_i \in \{1,\dots,5\}$ with $P(Z_i \le k \mid x_i) = \operatorname{logit}^{-1}(\alpha_k - x_i^\top\beta)$.
 - Reader ratings: $P(R_{ij} = r \mid Z_i = k) = \pi_{kr}$, one shared $5\times5$ matrix, rows summing to 1.
@@ -405,7 +408,7 @@ Touch the test set **once**, after all modelling decisions are frozen.
 Tie the results to the triage recommendation in `PLAN.md`:
 
 - Propose a rule such as: flag a nodule for priority review if $P(Z \ge 4 \mid x) > \tau$. Choose $\tau$ from the test-set ROC (e.g. sensitivity ≥ 0.9) and report the resulting workload (fraction flagged).
-- Use $\hat\pi$ to say something concrete about reader reliability (e.g. "a true grade-4 nodule is rated 3 or lower X% of the time"). This supports using a model as a second reader.
+- Do not use $\hat\pi$ to make claims about reader reliability, because the EM fit removes outlying ratings (Step 5.1).
 
 **Limitations you must state:**
 

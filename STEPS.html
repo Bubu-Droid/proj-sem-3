@@ -558,6 +558,10 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="
 <td>Modelling tables (no nominal ratings, no <code>split</code>)</td>
 </tr>
 <tr>
+<td><code>nodules_train_trimmed.csv</code></td>
+<td>Training table without outlying ratings, used by the EM model</td>
+</tr>
+<tr>
 <td><code>median_ties.csv</code></td>
 <td>Nodules whose median malignancy fell between two grades</td>
 </tr>
@@ -681,6 +685,13 @@ true-grade model (Weeks 4–5)</h2>
 <p>Script: <code>codes/r-codes/em-fit.R</code>. This is the core of the
 extension (Phase 4 of <code>PLAN.md</code>).</p>
 <h3 id="51-the-model">5.1 The model</h3>
+<p>Fit on <code>data/processed/nodules_train_trimmed.csv</code>, which
+drops training ratings at least 2 grades from their nodule's unrounded
+median, and disclose this in the abstract. The naive models and the test
+set keep all ratings. The rule was chosen because a first fit with all
+ratings gave implausible latent classes. Because it reduces measured
+disagreement, do not use <span class="math inline">\(\hat\pi\)</span> to
+make claims about reader reliability.</p>
 <ul>
 <li>Latent true grade <span class="math inline">\(Z_i \in
 \{1,\dots,5\}\)</span> with <span class="math inline">\(P(Z_i \le k \mid
@@ -923,10 +934,9 @@ class="math inline">\(P(Z \ge 4 \mid x) &gt; \tau\)</span>. Choose <span
 class="math inline">\(\tau\)</span> from the test-set ROC (e.g.
 sensitivity ≥ 0.9) and report the resulting workload (fraction
 flagged).</li>
-<li>Use <span class="math inline">\(\hat\pi\)</span> to say something
-concrete about reader reliability (e.g. "a true grade-4 nodule is rated
-3 or lower X% of the time"). This supports using a model as a second
-reader.</li>
+<li>Do not use <span class="math inline">\(\hat\pi\)</span> to make
+claims about reader reliability, because the EM fit removes outlying
+ratings (Step 5.1).</li>
 </ul>
 <p><strong>Limitations you must state:</strong></p>
 <ol type="1">
