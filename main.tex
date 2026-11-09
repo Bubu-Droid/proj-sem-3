@@ -839,6 +839,154 @@ their single odds ratios should not be interpreted on their own. The EM
 model assumes proportional odds for the latent grade, and we do not test
 this directly.
 
+\section{Model Evaluation}
+
+The models are evaluated once on the test set, which contains patients not
+used for fitting. The coefficients are frozen and the test features are
+standardised with the training means and standard deviations. One test
+nodule with missing solidity is excluded, leaving $827$ nodules from $261$
+patients.
+
+\subsection{Prediction Errors}
+
+Each model gives a probability for each grade, and its prediction is the
+most likely grade. The EM model's latent grades do not match the rating scale
+exactly, so we first convert them to rating probabilities:
+\[
+  P(R = r \mid x_i) = \sum_{k=1}^{5} p_{ik}(\hat{\alpha}, \hat{\beta})\,
+  \hat{\pi}_{kr}.
+\]
+We compare the prediction $\hat{Y}_i$ with the median grade $Y_i$ using the
+misclassification rate, the mean absolute error
+$\text{MAE} = \frac{1}{n}\sum_i |\hat{Y}_i - Y_i|$, and the root mean squared
+error $\text{RMSE} = \bigl(\frac{1}{n}\sum_i (\hat{Y}_i - Y_i)^2\bigr)^{1/2}$.
+The baseline always predicts grade $3$, the most common training grade.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c c c | c c c ||}
+    \hline
+    & \multicolumn{3}{c |}{\textbf{Error}}
+    & \multicolumn{3}{c ||}{\textbf{Reduction vs. Baseline (\%)}} \\
+    \textbf{Model} & \textbf{Misclass.} & \textbf{MAE} & \textbf{RMSE}
+    & \textbf{Misclass.} & \textbf{MAE} & \textbf{RMSE} \\[0.5ex]
+    \hline\hline
+    Baseline & 0.512 & 0.676 & 1.002 & -- & -- & -- \\
+    Naive Primary & 0.507 & 0.652 & 0.974 & 0.95 & 3.58 & 2.81 \\
+    Naive Secondary & 0.486 & 0.616 & 0.940 & 4.96 & 8.94 & 6.21 \\
+    EM & 0.510 & 0.688 & 1.031 & 0.24 & -1.79 & -2.85 \\
+    \hline
+  \end{tabular}
+  \caption{Test-Set Errors}
+  \label{table:test_errors}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c c c c c ||}
+    \hline
+    \textbf{Model} & \textbf{Grade 1} & \textbf{Grade 2} & \textbf{Grade 3}
+    & \textbf{Grade 4} & \textbf{Grade 5} \\[0.5ex]
+    \hline\hline
+    Actual Median & 89 & 173 & 404 & 114 & 47 \\
+    Naive Primary & 44 & 20 & 676 & 46 & 41 \\
+    Naive Secondary & 44 & 29 & 659 & 57 & 38 \\
+    EM & 65 & 0 & 702 & 0 & 60 \\
+    \hline
+  \end{tabular}
+  \caption{Number of Test Nodules Predicted at Each Grade}
+  \label{table:test_counts}
+\end{table}
+
+The naive secondary model has the lowest errors, and the naive primary model
+improves only slightly on the baseline. The EM model does not improve on the
+baseline: its misclassification rate is about the same, and its MAE and RMSE
+are worse. These are point estimates without confidence intervals, so small
+differences should not be treated as real. For example, the naive primary and
+EM models classify only $4$ and $1$ more nodules correctly than the baseline.
+
+\subsection{Reader Benchmark}
+
+The grades are themselves radiologists' opinions, so no model can be expected
+to have zero error. To put the errors in context, we compare each model with
+a single reader. For each reader on a nodule with at least two readers, the
+target is the median of the \emph{other} readers, with half-grades rounded up.
+We then measure how far that reader's rating and each model's prediction are
+from this target. This uses the $581$ multi-reader test nodules, on $79.9\%$
+of which the readers do not all agree.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c ||}
+    \hline
+    \textbf{Predictor} & \textbf{MAE Against Other Readers} \\[0.5ex]
+    \hline\hline
+    Single Reader & 0.743 \\
+    Baseline & 0.709 \\
+    Naive Primary & 0.614 \\
+    Naive Secondary & 0.579 \\
+    EM & 0.641 \\
+    \hline
+  \end{tabular}
+  \caption{Reader Benchmark on Multi-Reader Test Nodules}
+  \label{table:reader_benchmark}
+\end{table}
+
+All the models are closer to the other readers' median than a single reader
+is. This should not be overstated, because the constant baseline is too: MAE
+rewards predictions near the centre of the scale, whereas an individual
+reader's rating varies. The benchmark therefore shows that much of the error
+reflects disagreement between readers, not that the models outperform
+radiologists.
+
+\subsection{Shortcomings}
+
+\begin{itemize}
+    \ii \textbf{Small gains over the baseline:} Grade $3$ makes up $48.9\%$
+    of the test set, so always predicting it is already hard to beat.
+    The most likely grade also rarely moves away from it: the naive primary
+    model predicts grade $3$ for $81.7\%$ of nodules.
+    Grade $2$ is especially rare: it is the most likely grade only when
+    $x_i\trans\hat{\beta}$ lies between $-1.765$ and $-1.596$, against
+    $-1.595$ to $1.909$ for grade $3$, and grades $1$ to $3$ have similar mean
+    log volumes in training ($4.60$, $4.50$ and $4.76$), so the features do
+    little to separate them.
+    \ii \textbf{No improvement from EM:} Using the most likely grade, the EM
+    model never predicts grades $2$ or $4$. In \cref{table:em_pi}, latent
+    grades $2$ and $3$ are both rated $3$ most often, so a rating of $3$
+    dominates the middle of the scale. When its predictions leave grade $3$,
+    they go straight to $1$ or $5$, which raises the MAE and RMSE. In
+    addition, the
+    EM model is fitted to individual ratings, whereas these errors are measured
+    against the median, which favours the naive models.
+    \ii \textbf{Missing calcification:} Calcification is excluded from our
+    models, although calcified nodules are rated much lower (mean grade $1.22$
+    against $3.02$). These $87$ nodules are $10.5\%$ of the test set but
+    account for about a quarter of the naive primary model's absolute error,
+    with an MAE of $1.64$ against $0.54$ for the others. This comparison was
+    made after seeing the results.
+    \ii \textbf{Limited features:} Without the CT images, we have no
+    intensity-based features, and the geometric features only describe an
+    outline drawn by the radiologists.
+    \ii \textbf{Violated assumptions:} The proportional odds assumption is
+    rejected, so one coefficient per predictor cannot capture effects that
+    differ across thresholds. Nodules from one patient are also treated as
+    independent.
+    \ii \textbf{Circularity of the best model:} The naive secondary model
+    performs best, but its semantic ratings come from the same radiologists
+    who rate malignancy, and they would not be available without a reader.
+    Its advantage should not be read as evidence that it would help
+    automated prediction.
+    \ii \textbf{Noisy target:} The labels are radiologists' suspicion rather
+    than confirmed diagnoses, and readers frequently disagree. Good performance
+    here means agreement with expert opinion, not detection of cancer.
+    \ii \textbf{No measures of uncertainty:} We did not compute confidence
+    intervals for these errors or for the EM coefficients, and we did not
+    run a simulation study. We therefore cannot say whether the differences
+    between models are real, or confirm that the EM estimates recover known
+    parameters.
+\end{itemize}
+
 \section{Conclusion}
 
 This study developed a multiple linear regression model to
