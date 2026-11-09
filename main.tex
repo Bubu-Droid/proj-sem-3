@@ -432,9 +432,9 @@ $t = 0, 1, 2, \dots$ does the following.
     \[
       w_{ik}^{(t)} = P\bigl(Z_i = k \mid R_i, x_i, \Psi^{(t)}\bigr)
       = \frac{p_{ik}\bigl(\alpha^{(t)}, \beta^{(t)}\bigr)
-        \prod_{r} \bigl(\pi_{kr}^{(t)}\bigr)^{C_{ir}}}
-        {\sum_{l=1}^{5} p_{il}\bigl(\alpha^{(t)}, \beta^{(t)}\bigr)
-        \prod_{r} \bigl(\pi_{lr}^{(t)}\bigr)^{C_{ir}}}.
+      \prod_{r} \bigl(\pi_{kr}^{(t)}\bigr)^{C_{ir}}}
+      {\sum_{l=1}^{5} p_{il}\bigl(\alpha^{(t)}, \beta^{(t)}\bigr)
+      \prod_{r} \bigl(\pi_{lr}^{(t)}\bigr)^{C_{ir}}}.
     \]
     Taking the expectation of $\ell_c$ then replaces
     $\mathbf{1}\{Z_i = k\}$ with $w_{ik}^{(t)}$, which gives the
@@ -442,9 +442,9 @@ $t = 0, 1, 2, \dots$ does the following.
     \[
       Q\bigl(\Psi \mid \Psi^{(t)}\bigr)
       = \sum_{i=1}^{n} \sum_{k=1}^{5} w_{ik}^{(t)}
-        \log p_{ik}(\alpha, \beta)
+      \log p_{ik}(\alpha, \beta)
       + \sum_{i=1}^{n} \sum_{k=1}^{5} \sum_{r=1}^{5} w_{ik}^{(t)}
-        C_{ir} \log \pi_{kr}.
+      C_{ir} \log \pi_{kr}.
     \]
     \ii \textbf{M-step:} Set
     $\Psi^{(t+1)} = \operatorname{argmax}_{\Psi} Q(\Psi \mid \Psi^{(t)})$.
@@ -480,9 +480,9 @@ sign of a local maximum. The fitted structural model is
 \begin{align*}
   \operatorname{logit} \hat{P}(Z_i \le k \mid x_i) = \hat{\alpha}_k
   - \bigl(&1.682\cdot\texttt{log\_volume}
-  + 0.471\cdot\texttt{elongation} \\
-  &- 0.323\cdot\texttt{flatness}
-  - 0.583\cdot\texttt{solidity} \\
+    + 0.471\cdot\texttt{elongation} \\
+    &- 0.323\cdot\texttt{flatness}
+    - 0.583\cdot\texttt{solidity} \\
   &+ 0.010\cdot\texttt{compactness}\bigr),
 \end{align*}
 with $\hat{\alpha} = (-2.983, -0.494, 1.968, 4.024)$.
@@ -541,414 +541,303 @@ model, and \cref{table:em_pi} gives the estimated matrix $\hat{\pi}$.
     scale.
 \end{itemize}
 
-\section{Statistical Inference}
+\section{Hypothesis Testing}
 
-\subsection{Confidence Intervals}
-
-In multiple linear regression,
-estimating the point values for the coefficients
-$(\hat{\beta}_i)$ provides a single best guess for the
-population parameters. However,
-to account for sampling variability and quantify the
-precision of these estimates, we construct $95\%$
-confidence intervals for each predictor, the mean response,
-and future individual observations.
-
-\subsubsection{Coefficient Intervals}
-The true parameter $(\hat{\beta}_i)$ is estimated to fall
-within the following interval with a $95\%$ level of confidence:
+To formally evaluate our models, we conduct a series of hypothesis tests
+at the $\alpha = 0.05$ level, all on the training set. All of them are
+likelihood ratio tests. For a full model $M_1$ and a restricted model
+$M_0 \subset M_1$, with maximised log-likelihoods $\hat{\ell}_1$ and
+$\hat{\ell}_0$, the test statistic is
 \[
-  \hat{\beta}_i \pm t_{{\alpha}/{2}}(n-p-1)\cdot SE(\hat{\beta}_i)
-.\]
-Plugging in the values, we derive the following interval estimates:
-\begin{table}[H]
-  \centering
-  \begin{tabular}{|| c | c | c c ||}
-    \hline
-    \textbf{Predictor Variable}
-    & \textbf{Estimate}
-    & \textbf{Lower Bound ($2.5\%$)}
-    & \textbf{Upper Bound ($97.5\%$)} \\[0.5ex]
-    \hline\hline
-    \texttt{Intercept} ($\hat{\beta}_0$) & 0.0759 & -1.2559 & 1.4077 \\
-    $\log(\texttt{Flipper\_Length})$ ($\hat{\beta}_1$) & 0.9036 &
-    0.6099 & 1.1972 \\
-    $\log(\texttt{Culmen\_Length})$ ($\hat{\beta}_2$) & 0.4364 &
-    0.2864 & 0.5865 \\
-    $\log(\texttt{Culmen\_Depth})$ ($\hat{\beta}_3$) & 0.6181 &
-    0.4598 & 0.7763 \\
-    \texttt{Is\_Gen} ($\hat{\beta}_4$) & 0.2341 & 0.1648 & 0.3034 \\
-    \texttt{Is\_Chin} ($\hat{\beta}_5$) & -0.1195 & -0.1592 & -0.0798 \\
-    \hline
-  \end{tabular}
-  \caption{$95\%$ Confidence Intervals for the Regression Parameters}
-\end{table}
+  \Lambda = 2\bigl(\hat{\ell}_1 - \hat{\ell}_0\bigr).
+\]
+By the Neyman--Pearson lemma, the likelihood ratio test is most powerful
+when both hypotheses are simple. Our hypotheses are composite, so we rely
+on Wilks' theorem, under which $\Lambda$ is approximately $\chi^2_r$ under
+$H_0$ for large samples, where $r$ is the number of restrictions imposed
+by $M_0$. The statistics are computed before rounding, so the last digit may
+differ from the rounded log-likelihoods shown.
 
-Because both the response variable and the continuous predictors were
-log-transformed, the coefficients are interpreted as
-elasticities, representing the expected percentage change in
-body mass for a $1\%$ increase in the predictor,
-holding all other variables constant.
+\paragraph{Finding $\hat{\ell}_1$ and $\hat{\ell}_0$}
+Each is the value of the log-likelihood at its maximum, so every test needs
+two fits, one over the full parameter space $\Theta$ and one over the
+subset $\Theta_0$ allowed by $H_0$:
+\[
+  \hat{\ell}_1 = \max_{\theta \in \Theta} \ell(\theta),
+  \qquad
+  \hat{\ell}_0 = \max_{\theta \in \Theta_0} \ell(\theta).
+\]
+Setting a coefficient to zero is the same as removing that predictor, and
+all the remaining parameters are re-estimated in the restricted fit.
+
+For the naive models, the equations $\nabla \ell(\alpha, \beta) = 0$ have
+no closed-form solution, so $\ell$ is maximised iteratively with BFGS, a
+quasi-Newton method. Writing $\theta = (\alpha, \beta)$, each step is
+\[
+  \theta^{(t+1)} = \theta^{(t)} + s_t B_t \nabla \ell\bigl(\theta^{(t)}\bigr),
+\]
+where $s_t$ is a step size and $B_t$ approximates the inverse of the
+negative Hessian, updated from the change in the gradient between steps.
+Since $\ell$ is concave in $(\alpha, \beta)$, this reaches the global
+maximum.
+
+For the EM model, $\ell(\Psi)$ is maximised with the algorithm of the
+previous section, in which the update for $(\alpha, \beta)$ in each M-step
+also uses BFGS. We then evaluate $\ell$ at the converged parameters. This
+likelihood need not be concave, so a fit may stop at a local maximum.
+We therefore fit the full model from six starting values, and each drop-one
+model from two, keeping the largest log-likelihood. The naive and EM
+log-likelihoods are based on
+different data, the median grade and the individual ratings, so they are
+only compared within each family.
+
+\subsection{Overall Model Significance}
+
+This test evaluates whether a naive model as a whole explains the
+malignancy grade better than a model with only the thresholds.
+
 \begin{itemize}
-    \ii \textbf{Flipper Length:} We are $95\%$ confident that for every $1\%$
-    increase in a penguin's flipper length,
-    its expected body mass increases by between $0.61\%$ and $1.20\%$.
-
-    \ii \textbf{Culmen Length:} We are $95\%$ confident that a $1\%$
-    increase in culmen length corresponds to an expected body mass
-    increase of between $0.29\%$ and $0.59\%$.
-
-    \ii \textbf{Culmen Depth:} We are $95\%$ confident that a $1\%$
-    increase in culmen depth is associated with a
-    $0.46\%$ to $0.78\%$ increase in expected body mass.
-
-    \ii \textbf{Species Effects (\texttt{Is\_Gen}):}
-    We are $95\%$ confident that,
-    holding all physical measurements constant,
-    a Gentoo penguin will weigh between $17.9\%$ and $35.4\%$
-    more than the baseline Adelie species.
-
-    \ii \textbf{Species Effects (\texttt{Is\_Chin}):}
-    We are $95\%$ confident that,
-    holding all physical measurements constant,
-    a Chinstrap penguin will weigh between $7.7\%$ and $14.7\%$
-    less than the Adelie species.
-
-    \ii \textbf{Intercept:} The $95\%$ confidence interval
-    for the intercept ranges from $-1.2559$ to $1.4077$.
-    The intercept corresponds to the expected
-    log body mass of a baseline Adelie penguin
-    when all log-transformed predictors are equal to zero.
-    This implies that the original
-    measurements are equal to 1 (since $\log(1) = 0$),
-    which is not biologically meaningful.
-    Thus, the intercept has limited practical
-    interpretation in this context.
-\end{itemize}
-
-\subsubsection{Confidence Intervals for the Mean Response}
-Let $x_0$ be
-a column vector containing a specific set of predictor
-values. To estimate the expected value $\mathbb{E}[\log(\texttt{Body\_M})]$ at
-$x_0$, we utilize the matrix $X$
-to account for the covariance among predictors. The $95\%$
-confidence interval for the mean response is given by:
-\[
-  \hat{y}_0 \pm t_{\alpha/2}(n-p-1) \cdot
-  \sqrt{\text{MSE} \cdot x_0^T
-  (X^T X)^{-1} x_0}
-.\]
-Here, MSE is the Mean Squared Error, estimating the error
-variance $\sigma^2$.
-
-\paragraph{Application: Expected Mass Across Species}
-To isolate the structural effects of the categorical
-variables, we construct a theoretical standardized penguin
-utilizing the mean of the log-transformed morphological
-measurements. We then predict the expected $\log(\texttt{Body\_M})$
-across all three species profiles, keeping these baseline
-log-dimensions mathematically constant.
-
-\begin{table}[H]
-  \centering
-  \begin{tabular}{|| c | c | c c ||}
-    \hline
-    \textbf{Species}
-    & \textbf{Point Estimate}
-    & \textbf{Lower Bound}
-    & \textbf{Upper Bound} \\
-    \hline\hline
-    \textbf{Adelie (Baseline)} & 8.2651 & 8.2337 & 8.2964 \\
-    \textbf{Chinstrap} & 8.1456 & 8.1178 & 8.1733 \\
-    \textbf{Gentoo} & 8.4992 & 8.4581 & 8.5402 \\
-    \hline
-  \end{tabular}
-  \caption{$95\%$ Confidence Intervals for Mean Response}
-\end{table}
-
-Observing the Chinstrap and Gentoo confidence bounds,
-we see parallel shifts relative to the Adelie baseline.
-Because the input traits are identical, we are $95\%$
-confident that the average log body mass of a Gentoo
-population will always remain strictly higher than an
-identically proportioned Adelie population, whereas a
-Chinstrap population will remain strictly lower.
-
-\subsubsection{Prediction Intervals}
-While the confidence interval predicts
-$\mathbb{E}[\log(\texttt{Body\_M})]$
-for all penguins with a specific set of traits, the
-prediction interval predicts the exact
-$\log(\texttt{Body\_M})$
-of a
-single, individual new penguin. Because individual
-observations naturally vary around the population mean,
-predicting a single point carries additional irreducible
-uncertainty. The $95\%$ prediction interval
-of $\log(\texttt{Body\_M})$ is mathematically
-wider and is expressed as:
-\[
-  \hat{y}_0 \pm t_{\alpha/2}(n-p-1) \cdot
-  \sqrt{\text{MSE} \cdot \left(1 + x_0^T
-  (X^T X)^{-1} x_0\right)}
-.\]
-The addition of $1$ inside the parenthetical term accounts
-for the variance of the residual error ($\sigma^2$)
-associated with drawing a new, random individual from the
-population.
-
-\paragraph{Application: Predicting Individual Penguins}
-Using the same theoretical baseline log-dimensions, we now
-calculate the intervals for randomly sampling a single new
-penguin from each respective species.
-
-\begin{table}[H]
-  \centering
-  \begin{tabular}{|| c | c | c c ||}
-    \hline
-    \textbf{Species}
-    & \textbf{Point Estimate}
-    & \textbf{Lower Bound}
-    & \textbf{Upper Bound} \\
-    \hline\hline
-    \textbf{Adelie (Baseline)} & 8.2651 & 8.1107 & 8.4195 \\
-    \textbf{Chinstrap} & 8.1456 & 7.9918 & 8.2993 \\
-    \textbf{Gentoo} & 8.4992 & 8.3425 & 8.6558 \\
-    \hline
-  \end{tabular}
-  \caption{$95\%$ Prediction Intervals for New Observations}
-\end{table}
-
-As mathematically expected, these prediction intervals are
-significantly wider than their corresponding confidence
-intervals. This increased width explicitly accounts for the
-inherent random variation ($\sigma^2$) between individual
-penguins, even when they belong to the exact same species
-and share identical physical measurements.
-
-\subsection{Hypothesis Testing}
-To formally evaluate the explanatory power and structural
-validity of our multiple log-linear regression model, we
-conduct three distinct tiers of hypothesis testing.
-
-\subsubsection{Overall Model Significance}
-The global F-test evaluates whether the model as a whole
-explains a statistically significant portion of the variance
-in expected log body mass. To do this, we compare the full
-model against a restricted, intercept-only baseline model.
-\begin{itemize}
-    \ii \textbf{Null Hypothesis ($H_0$):} $\beta_1 = \beta_2 =
-    \beta_3 = \beta_4 = \beta_5 = 0$. None of the predictors
-    have a significant linear relationship with the response.
-
+    \ii \textbf{Null Hypothesis ($H_0$):} All coefficients are zero, so
+    the predictors have no association with the malignancy grade.
     \ii \textbf{Alternative Hypothesis ($H_1$):} At least one
-    $\beta_i \neq 0$ (for $i \in \{1,2,3,4,5\}$).
+    $\beta_j \neq 0$.
 \end{itemize}
-The test statistic
-evaluates the reduction in SSE when
-all predictors are added to the intercept model:
-\[
-  F_0 = \frac{{(\text{SSE}_{\text{restricted}} -
-    \text{SSE}_{\text{full}})} / {\mathrm{df}_{\text{restricted}} -
-  \mathrm{df}_{\text{full}}}}{\text{SSE}_{\text{full}}
-  / \mathrm{df}_{\text{full}}}
-.\]
-For the global test, the restricted intercept-only model
-has $\mathrm{df} = n-1$, and the full model containing $5$ predictors
-has $\mathrm{df} = n-6$. Evaluating these degrees of freedom, the
-formula simplifies to:
-\[
-  F_0 = \frac{(\text{SSE}_{\text{restricted}} -
-  \text{SSE}_{\text{full}}) / 5}{\text{SSE}_{\text{full}}
-  / 336}
-.\]
+
+The primary model has $5$ coefficients and the secondary model has $10$,
+so $\Lambda$ is compared with the $\chi^2_5$ and $\chi^2_{10}$ distributions
+respectively.
 
 \paragraph{Calculation and Inference}
-Evaluating the global model yields an F-statistic of
-$F_0 = 340.7279$, which corresponds to a p-value strictly
-less than $0.001$. Because
-this p-value is significantly smaller than our significance
-level ($\alpha = 0.05$), we reject the null hypothesis. We
-conclude with $95\%$ confidence that the regression model
-as a whole explains a statistically significant proportion
-of the variance in expected log body mass.
-
-\subsubsection{Individual Parameter Significance}
-While the global F-test evaluates the entire model, marginal
-t-tests evaluate the independent contribution of each
-specific predictor, holding all other variables constant.
-\begin{itemize}
-    \ii \textbf{Null Hypothesis ($H_0$):} $\beta_i = 0$. The
-    $i$-th predictor does not significantly affect expected
-    log body mass.
-
-    \ii \textbf{Alternative Hypothesis ($H_1$):} $\beta_i \neq 0$.
-\end{itemize}
-The test statistic is calculated by dividing the parameter
-estimate by its standard error:
+The thresholds-only model has $\hat{\ell}_0 = -2552.429$. For the primary
+model,
 \[
-  t_0 = \frac{\hat{\beta}_i}{\text{SE}(\hat{\beta}_i)}
-.\]
+  \Lambda = 2\bigl(-2155.134 - (-2552.429)\bigr) = 794.590,
+\]
+and for the secondary model,
+\[
+  \Lambda = 2\bigl(-2108.642 - (-2552.429)\bigr) = 887.574.
+\]
+Both p-values are strictly less than $0.001$, so we reject the null
+hypothesis for both models. The predictors are jointly associated with the
+malignancy grade.
+
+\subsection{Individual Parameter Significance}
+
+While the overall test evaluates a model as a whole, a drop-one test
+evaluates the contribution of each predictor given the others.
+
+\begin{itemize}
+    \ii \textbf{Null Hypothesis ($H_0$):} $\beta_j = 0$. The $j$-th
+    predictor has no association with the malignancy grade once the other
+    predictors are included.
+    \ii \textbf{Alternative Hypothesis ($H_1$):} $\beta_j \neq 0$.
+\end{itemize}
+
+The restricted model is the full model refitted without the $j$-th
+predictor, so $r = 1$ and $\Lambda$ is compared with the $\chi^2_1$
+distribution. The full models have $\hat{\ell}_1 = -2155.134$ (primary) and
+$\hat{\ell}_1 = -2108.642$ (secondary).
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c c c | c c c ||}
+    \hline
+    & \multicolumn{3}{c |}{\textbf{Primary Model}}
+    & \multicolumn{3}{c ||}{\textbf{Secondary Model}} \\
+    \textbf{Predictor}
+    & $\hat{\ell}_0$ & $\Lambda$ & \textbf{p-value}
+    & $\hat{\ell}_0$ & $\Lambda$ & \textbf{p-value} \\[0.5ex]
+    \hline\hline
+    \texttt{log\_volume} & -2397.217 & 484.165 & $< 0.001$ &
+    -2286.774 & 356.264 & $< 0.001$ \\
+    \texttt{elongation} & -2173.628 & 36.988 & $< 0.001$ & -2125.440
+    & 33.596 & $< 0.001$ \\
+    \texttt{flatness} & -2160.434 & 10.600 & 0.001 & -2109.324 &
+    1.363 & 0.243 \\
+    \texttt{solidity} & -2169.223 & 28.176 & $< 0.001$ & -2111.322 &
+    5.360 & 0.021 \\
+    \texttt{compactness} & -2155.448 & 0.628 & 0.428 & -2108.643 &
+    0.002 & 0.967 \\
+    \texttt{spiculation} & -- & -- & -- & -2122.351 & 27.418 & $< 0.001$ \\
+    \texttt{lobulation} & -- & -- & -- & -2109.614 & 1.944 & 0.163 \\
+    \texttt{margin} & -- & -- & -- & -2115.826 & 14.367 & $< 0.001$ \\
+    \texttt{texture} & -- & -- & -- & -2109.075 & 0.866 & 0.352 \\
+    \texttt{sphericity} & -- & -- & -- & -2108.643 & 0.002 & 0.969 \\
+    \hline
+  \end{tabular}
+  \caption{Drop-One Likelihood Ratio Tests for the Naive Models}
+  \label{table:lrt_drop}
+\end{table}
+
+\paragraph{Inference}
+As shown in \cref{table:lrt_drop}, we reject the null hypothesis for log
+volume, elongation, flatness and solidity in the primary model, and log
+volume has by far the largest statistic. We fail to reject it for
+compactness. In the secondary model, we reject it for log volume,
+elongation, solidity, spiculation and margin. Flatness is no longer
+significant once the semantic ratings are included. These tests are not
+adjusted for multiple comparisons.
+
+\subsection{Joint Significance of the Semantic Ratings}
+
+To justify including the semantic ratings, we test their joint significance
+against the primary model, which is nested in the secondary model.
+
+\begin{itemize}
+    \ii \textbf{Null Hypothesis ($H_0$):} The coefficients of spiculation,
+    lobulation, margin, texture and sphericity are all zero. The ratings
+    provide no additional explanatory power beyond the geometric features.
+    \ii \textbf{Alternative Hypothesis ($H_1$):} At least one of these
+    coefficients is non-zero.
+\end{itemize}
+
+The secondary model adds $5$ coefficients, so $r = 5$.
+
+\paragraph{Calculation and Inference}
+Evaluating the statistic gives
+\[
+  \Lambda = 2\bigl(-2108.642 - (-2155.134)\bigr) = 92.984,
+\]
+with a p-value strictly less than $0.001$ under the $\chi^2_5$ distribution.
+We therefore reject the null hypothesis. The semantic ratings improve the
+model, although this is partly circular because they come from the same
+radiologists who rate malignancy.
+
+\subsection{Significance of the Features in the EM Model}
+
+The same tests apply to the EM model, using the observed-data log-likelihood
+$\ell(\Psi)$ rather than the complete-data one. Each restricted model is
+refitted by EM. The full model has $\hat{\ell}_1 = -5190.172$.
+
+\paragraph{Overall Significance}
+\begin{itemize}
+    \ii \textbf{Null Hypothesis ($H_0$):} $\beta = 0$. The features are
+    not informative about the latent grade beyond the readers' ratings, so
+    $p_{ik} = p_k$ for every nodule.
+    \ii \textbf{Alternative Hypothesis ($H_1$):} At least one
+    $\beta_j \neq 0$.
+\end{itemize}
+The restricted model has $\hat{\ell}_0 = -5606.396$, which gives
+\[
+  \Lambda = 2\bigl(-5190.172 - (-5606.396)\bigr) = 832.449.
+\]
+With $r = 5$, the p-value is strictly less than $0.001$, so we reject the
+null hypothesis. The features are informative about the latent grade.
+
+\paragraph{Individual Parameter Significance}
+We then test $H_0 \colon \beta_j = 0$ against $H_1 \colon \beta_j \neq 0$ for
+each feature, with $r = 1$.
 
 \begin{table}[H]
   \centering
   \begin{tabular}{|| c | c | c | c ||}
     \hline
-    \textbf{Predictor Variable}
-    & \textbf{Estimate ($\hat{\beta}_i$)}
-    & \textbf{t-statistic}
-    & \textbf{p-value} \\
+    \textbf{Predictor} & $\hat{\ell}_0$ & $\Lambda$
+    & \textbf{p-value} \\[0.5ex]
     \hline\hline
-    \texttt{Intercept} & 0.0759 & 0.112 & 0.911 \\
-    $\log(\texttt{Flipper\_Length})$ & 0.9036 & 6.053 & $<0.001$ \\
-    $\log(\texttt{Culmen\_Length})$ & 0.4364 & 5.722 & $<0.001$ \\
-    $\log(\texttt{Culmen\_Depth})$ & 0.6181 & 7.682 & $<0.001$ \\
-    \texttt{Is\_Gen} & 0.2341 & 6.641 & $<0.001$ \\
-    \texttt{Is\_Chin} & -0.1195 & -5.925 & $<0.001$ \\
+    \texttt{log\_volume} & -5424.701 & 469.058 & $< 0.001$ \\
+    \texttt{elongation} & -5210.130 & 39.917 & $< 0.001$ \\
+    \texttt{flatness} & -5200.096 & 19.848 & $< 0.001$ \\
+    \texttt{solidity} & -5212.612 & 44.880 & $< 0.001$ \\
+    \texttt{compactness} & -5190.181 & 0.018 & 0.894 \\
     \hline
   \end{tabular}
-  \caption{Marginal t-Tests for Individual Parameters}
+  \caption{Drop-One Likelihood Ratio Tests for the EM Model}
+  \label{table:lrt_drop_em}
 \end{table}
 
 \paragraph{Inference}
-As shown in the table, with the exception of the intercept,
-every morphological and categorical predictor yields a
-p-value strictly less than $0.001$. This strongly rejects
-the null hypotheses at the $\alpha = 0.05$ level, confirming
-that each variable is a highly significant independent
-predictor of log body mass.
+As shown in \cref{table:lrt_drop_em}, we reject the null hypothesis for
+every feature except compactness. This agrees with the primary naive model:
+the same four features are significant, and log volume again has the largest
+statistic.
 
-\subsubsection{Joint Significance of Categorical Variables}
-To rigorously justify the inclusion of the categorical
-species indicators, we test their joint significance against
-a restricted model containing only the physical measurements.
+\subsection{Proportional Odds Assumption}
+
+The models assume that each coefficient is the same at every threshold. We
+test this on the naive models, where each threshold has its own coefficient
+$\beta_j^{(k)}$ under the alternative.
+
 \begin{itemize}
-    \ii \textbf{Null Hypothesis ($H_0$):} $\beta_4 = \beta_5 = 0$.
-    The species classifications provide no additional
-    explanatory power beyond physical dimensions.
-
-    \ii \textbf{Alternative Hypothesis ($H_1$):} At least one
-    species parameter is non-zero.
+    \ii \textbf{Null Hypothesis ($H_0$):}
+    $\beta_j^{(1)} = \beta_j^{(2)} = \beta_j^{(3)} = \beta_j^{(4)}$. The
+    effect of the $j$-th predictor is the same at every threshold.
+    \ii \textbf{Alternative Hypothesis ($H_1$):} The effect differs for at
+    least one threshold.
 \end{itemize}
-We use the same F-statistic as the global test:
-\[
-  F_0 = \frac{{(\text{SSE}_{\text{restricted}} -
-    \text{SSE}_{\text{full}})} / {\mathrm{df}_{\text{restricted}} -
-  \mathrm{df}_{\text{full}}}}{\text{SSE}_{\text{full}}
-  / \mathrm{df}_{\text{full}}}
-.\]
-For our specific partial test, the restricted model contains
-$3$ continuous predictors ($\mathrm{df} = n-4$), and the full model
-adds $2$ categorical indicators ($\mathrm{df} = n-6$). Evaluating
-the degrees of freedom yields:
-\[
-  F_0 = \frac{(\text{SSE}_{\text{restricted}} -
-  \text{SSE}_{\text{full}}) / 2}{\text{SSE}_{\text{full}}
-  / 336}
-.\]
+
+We use likelihood ratio tests. The restricted model is the proportional odds
+model, and the full model lets the coefficients differ by threshold. Freeing
+one predictor adds $3$ parameters, so $r = 3$. Freeing all predictors gives
+$r = 15$ for the primary model and $r = 30$ for the secondary model.
 
 \paragraph{Calculation and Inference}
-Evaluating the joint addition of the species variables
-yields an F-statistic of $F_0 = 95.7775$ with a
-corresponding p-value strictly less than $0.001$.
-Because this p-value is significantly
-smaller than $\alpha = 0.05$, we firmly reject the null
-hypothesis. This mathematically suggests that the categorical
-species indicators provide a highly significant improvement
-to the model's predictive power, reasonably justifying their
-inclusion over a model based purely on physical dimensions.
-
-\subsection{Model Diagnostics}
-\label{subsection:goodness_of_fit}
-
-To conclude our analysis, we must verify both the
-explanatory power of the model and the structural validity
-of the Ordinary Least Squares (OLS) assumptions in log-space.
-
-\subsubsection{Goodness of Fit}
-The explanatory power of the model is measured by the
-proportion of total variance in $\log(\texttt{Body\_M})$ that is
-captured by our selected predictors.
-\begin{itemize}
-    \ii \textbf{Multiple $R^2$ ($0.8353$):} Our model explains
-    $83.53\%$ of the sample variance in the observed
-    $\log(\texttt{Body\_M})$.
-    \ii \textbf{Adjusted $R^2$ ($0.8328$):} Because adding
-    parameters mathematically inflates the raw $R^2$. Our high
-    adjusted $R^2$ suggests that the inclusion of the categorical
-    species indicators provides a genuine increase in predictive
-    accuracy.
-\end{itemize}
-
-\subsubsection{Residual Analysis}
-A regression model is only mathematically valid if its
-unobserved error terms ($\eps$) are random
-and independent.
-
-\begin{itemize}
-    \ii \textbf{Residuals vs. Fitted:} The plotted residuals
-    display a random scatter clustered tightly around the
-    horizontal zero-line with no distinct funnels or curves.
-    This suggests that the variance of the errors is constant
-    and that the log-linear structural
-    relationship is appears appropriate.
-    % \begin{figure}[H]
-    %   \centering
-    %   \includegraphics[width=0.6\textwidth,keepaspectratio]{./codes/plots/model-testing/res-vs-fit.pdf}
-    %   \caption{Residuals vs. Fitted}
-    % \end{figure}
-
-    \ii \textbf{Normal Q-Q Plot:} The standardized residuals
-    tightly hug the theoretical $45$-degree diagonal line,
-    visually indicating that the error terms are normally
-    distributed.
-    % \begin{figure}[H]
-    %   \centering
-    %   \includegraphics[width=0.6\textwidth,keepaspectratio]{./codes/plots/model-testing/qq-plot.pdf}
-    %   \caption{Normal Q-Q Plot}
-    % \end{figure}
-\end{itemize}
-
-\subsubsection{Normality Assessment}
-To rigorously prove the visual assumption of normality
-established by the Q-Q plot, we apply the Pearson Chi-Square
-Goodness-of-Fit test to the model's standardized residuals.
-
-By standardizing the residuals ($\frac{\eps - \bar{\eps}}{s}$),
-we map them directly to a standard Normal distribution
-curve, $N(0,1)$. We slice this theoretical curve into $k=10$
-regions with equal probabilities, meaning the expected probability
-of a residual falling into any specific region is exactly
-$E_i = 10\%$.
-
-We then map our actual observed standardized residuals
-($O_i$) into these regions. The test statistic evaluates the
-difference between the observed counts and the theoretically
-expected counts:
+Freeing all predictors in the primary model gives
 \[
-  \chi^2 = \sum_{i=1}^{k} \frac{(O_i - E_i)^2}{E_i}
-.\]
+  \Lambda = 2\bigl(-2059.178 - (-2155.134)\bigr) = 191.913,
+\]
+and in the secondary model it gives
+\[
+  \Lambda = 2\bigl(-1973.441 - (-2108.642)\bigr) = 270.402.
+\]
+Both p-values are strictly less than $0.001$, so we reject the proportional
+odds assumption for both models. \Cref{table:po_tests} gives the test for
+each predictor.
 
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=0.8\textwidth,keepaspectratio]{./codes/plots/model-testing/pearson-chisq.pdf}
-%   \caption{Chi-Square Goodness-of-Fit Test for Normality}
-% \end{figure}
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c c | c c ||}
+    \hline
+    & \multicolumn{2}{c |}{\textbf{Primary Model}}
+    & \multicolumn{2}{c ||}{\textbf{Secondary Model}} \\
+    \textbf{Predictor}
+    & $\Lambda$ & \textbf{p-value}
+    & $\Lambda$ & \textbf{p-value} \\[0.5ex]
+    \hline\hline
+    \texttt{log\_volume} & 120.209 & $< 0.001$ & 121.891 & $< 0.001$ \\
+    \texttt{elongation} & 9.483 & 0.024 & 10.471 & 0.015 \\
+    \texttt{flatness} & 47.476 & $< 0.001$ & 52.975 & $< 0.001$ \\
+    \texttt{solidity} & 30.034 & $< 0.001$ & 19.680 & $< 0.001$ \\
+    \texttt{compactness} & 42.540 & $< 0.001$ & 37.296 & $< 0.001$ \\
+    \texttt{spiculation} & -- & -- & 7.963 & 0.047 \\
+    \texttt{lobulation} & -- & -- & 9.788 & 0.021 \\
+    \texttt{margin} & -- & -- & 73.527 & $< 0.001$ \\
+    \texttt{texture} & -- & -- & 56.110 & $< 0.001$ \\
+    \texttt{sphericity} & -- & -- & 4.843 & 0.184 \\
+    \hline
+  \end{tabular}
+  \caption{Likelihood Ratio Tests of the Proportional Odds Assumption ($r = 3$)}
+  \label{table:po_tests}
+\end{table}
 
-\paragraph{Calculation and Inference}
-Evaluating the standardized residuals across $10$ equiprobable
-bins yields a test statistic of $\chi^2 = 9.6374$. With
-$k-3 = 7$ degrees of freedom (accounting for the estimation
-of the mean and variance), this corresponds to a p-value of
-$0.2101$.
+Every predictor except sphericity violates the assumption at the
+$\alpha = 0.05$ level. \Cref{table:po_thresholds} shows how the odds ratios
+of the primary model change across thresholds when all predictors are free.
 
-Because this p-value is strictly greater than our significance
-threshold ($\alpha = 0.05$), we \textbf{fail to reject} the
-null hypothesis. This mathematically suggests that our residuals
-do not significantly deviate from a normal distribution.
-Consequently, all confidence intervals, prediction intervals,
-and hypothesis tests calculated in the preceding sections are
-reasonably supported.
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|| c | c | c | c | c ||}
+    \hline
+    \textbf{Predictor}
+    & $Y > 1$ & $Y > 2$ & $Y > 3$ & $Y > 4$ \\[0.5ex]
+    \hline\hline
+    \texttt{log\_volume} & 1.924 & 2.427 & 4.592 & 5.960 \\
+    \texttt{elongation} & 1.551 & 1.390 & 1.368 & 1.008 \\
+    \texttt{flatness} & 0.607 & 0.873 & 0.999 & 1.543 \\
+    \texttt{solidity} & 0.550 & 0.780 & 0.763 & 0.615 \\
+    \texttt{compactness} & 1.243 & 1.062 & 0.768 & 0.834 \\
+    \hline
+  \end{tabular}
+  \caption{Odds Ratios at Each Threshold, Primary Model}
+  \label{table:po_thresholds}
+\end{table}
+
+Size matters much more for separating the high grades than the low ones, so
+its single odds ratio is a summary rather than a constant multiplier. The
+effects of flatness and compactness change direction across thresholds, so
+their single odds ratios should not be interpreted on their own. The EM
+model assumes proportional odds for the latent grade, and we do not test
+this directly.
 
 \section{Conclusion}
 
