@@ -13,23 +13,60 @@ Species Effects on Penguin Body Mass}
 \begin{document}
 
 \maketitlepage{\thetitle}{\theauthor}{\thedate}{%
-  The latent-grade model uses the trimmed file
-  \texttt{nodules\_train\_trimmed.csv} rather than the entire training data:
-  we removed individual ratings at least two grades from their nodule's
-  median ($212$ of the $4647$ training ratings, $4.6\%$, across $204$ nodules,
-  one of which lost all of its ratings). The naive models and the test set use
-  all ratings. This rule was chosen after an initial fit
-  gave implausible results. It improves the interpretability of the latent
-  classes, but it reduces measured disagreement, so the estimated confusion
-  matrix overstates reader reliability and predictive fit on the untrimmed
-  ratings is worse.%
+  This project models radiologists' malignancy ratings of lung nodules in the
+  LIDC-IDRI database, using geometric features computed from their outlines. We
+  compare a proportional odds model of the median rating with a latent-grade model
+  fitted by the EM algorithm. Size is the dominant predictor, but the proportional
+  odds assumption is rejected. On held-out patients, the models predict exact grades
+  poorly and the EM model does not improve on always predicting grade $3$. However, a
+  triage rule flags $91.3\%$ of high-grade nodules while flagging $47.0\%$ of all
+  nodules.
+
+  All models are fitted to the trimmed file
+  \texttt{nodules\_train\_trimmed.csv} rather than the entire training data: we
+  removed individual ratings at least two grades from their nodule's median ($212$
+  of the $4647$ training ratings, $4.6\%$, across $204$ nodules) and recomputed each
+  median. One nodule lost all of its ratings and is excluded from the naive models.
+  The test set uses all ratings. This rule was chosen after an initial fit gave
+  implausible results. It improves the interpretability of the latent classes, but
+  it reduces measured disagreement, so the estimated confusion matrix overstates
+  reader reliability, and predictive fit on the untrimmed ratings is worse.%
 }
 
 \makecontents
 
 \section{Introduction}
 
-insert introduction here.
+Lung nodules are often found on chest CT scans, and most are benign. Radiologists
+must decide which ones need attention, and their time is limited, particularly in
+public health systems. A statistical model of how nodule characteristics relate to
+suspected malignancy could help to prioritise this review.
+
+Modelling this is not straightforward because radiologists often disagree. In the
+LIDC-IDRI database, up to four radiologists rate each nodule's malignancy on an
+ordered scale from $1$ to $5$, and on about $78\%$ of the multi-reader nodules in
+our training set they do not all give the same rating. The usual approach of
+taking one summary rating per nodule ignores this disagreement.
+
+This project therefore compares two approaches: a proportional odds model of the
+median rating, and a latent-grade model, fitted by the EM algorithm, that treats a
+nodule's true grade as unobserved and each rating as a noisy measurement of it. We
+address the following research questions.
+\begin{enumerate}
+    \ii Which size and shape features are associated with radiologists' malignancy
+    ratings?
+    \ii Does the proportional odds model adequately describe that relationship?
+    \ii How much do radiologists' semantic ratings add beyond geometric features?
+    \ii Does modelling a latent true grade change the estimated effects or the
+    predictions?
+    \ii Could such a model support the triage of nodules for review?
+\end{enumerate}
+
+The rest of the report is organised as follows. Section $2$ describes the data, and
+Section $3$ specifies and fits the models. Section $4$ presents the hypothesis tests,
+including the test of the proportional odds assumption. Section $5$ evaluates the
+models on held-out patients, and Section $6$ interprets the results as a triage
+rule. Section $7$ concludes.
 
 \section{Data Description}
 
@@ -1175,69 +1212,74 @@ probabilities are still useful for ordering nodules.
 
 \section{Conclusion}
 
-This study developed a multiple linear regression model to
-explain penguin body mass using flipper length, culmen
-length, culmen depth, and species. Motivated by allometric
-scaling, a log transformation was applied to obtain a
-log-linear model that better captures the underlying
-relationships.
+This study modelled radiologists' malignancy ratings of lung nodules in the
+LIDC-IDRI database. We fitted a proportional odds model to the median rating,
+first with geometric features and then with semantic ratings added, and a
+latent-grade model, fitted by the EM algorithm, that treats each nodule's true
+grade as unobserved.
 
-The fitted model demonstrated strong explanatory power,
-accounting for about 83.5\% of the variation in log body
-mass. All predictors, except the intercept, were highly
-significant. Flipper length, culmen length, and culmen depth
-each showed a positive association with body mass, while the
-species indicators captured meaningful differences among
-penguin species.
+Size is the dominant predictor. In the primary model, one standard deviation of
+log volume multiplies the odds of a higher grade by $3.69$, and log volume,
+elongation, flatness and solidity are all significant. Compactness is not
+significant in any model. The semantic ratings improve the fit, particularly
+spiculation and margin, although this is partly circular because they come from
+the same radiologists. The EM model gives the same directions for these effects,
+with odds ratios further from $1$, but we did not assess the uncertainty of
+those differences.
 
-The inferential results supported the usefulness of the
-model. The overall F-test confirmed statistical significance,
-and the joint test showed that species provides additional
-explanatory power beyond physical measurements. Confidence
-and prediction intervals were consistent with the fitted
-model.
+The proportional odds assumption is rejected for both naive models. The effect of
+size grows across the thresholds, and the effects of flatness and compactness
+change direction, so the single odds ratios are only summaries.
 
-Diagnostic analysis indicated that the regression assumptions
-are reasonably satisfied. Residual plots showed no major
-patterns, the Q-Q plot suggested approximate normality, and
-the chi-square test did not detect significant deviations.
-Overall, the model provides both strong predictive
-performance and a meaningful representation of the
-relationship between body mass and morphological traits.
+On the test set, the models predict exact grades poorly. The naive secondary
+model does best, with a misclassification rate of $48.6\%$ against $51.2\%$ for
+always predicting grade $3$, and the naive primary model barely improves on this
+baseline. The EM model does not improve on it, and has a higher MAE and RMSE.
+Modelling the latent grade therefore gave no predictive benefit here, which
+suggests that the median rating is an adequate summary for prediction. Much of
+the remaining error reflects disagreement between readers, as a single reader
+differs from the other readers by $0.74$ grades on average.
+
+The models are more useful for ordering nodules than for assigning grades. A
+triage rule based on the naive primary model flags $91.3\%$ of high-grade test
+nodules while flagging $47.0\%$ of all nodules. This supports further study of
+such a model as an aid to prioritising review, but not as a replacement for a
+radiologist.
+
+These conclusions are limited by the use of radiologists' suspicion rather than
+confirmed diagnoses, the exclusion of calcification and of intensity-based
+features, the violated assumptions, and the absence of confidence intervals for
+the test results. Future work should add calcification to the models, relax the
+proportional odds assumption and validate the triage rule against confirmed
+diagnoses.
 
 \appendix
 \section{Appendix}
 
 \subsection{Dataset}
 
-The dataset used in this study is the
-Palmer Penguins dataset\cite{palmerpenguins},
-originally collected by Kristen B.\ Gorman and made publicly
-available by Allison Marie Horst, Alison Presmanes Hill, and
-Kristen B.\ Gorman.
-
-It can be accessed through the following sources:
-\begin{itemize}
-  \item GitHub:
-    \href{https://github.com/allisonhorst/palmerpenguins}
-    {github.com/allisonhorst/palmerpenguins}
-
-  \item Kaggle:
-    \href{https://www.kaggle.com/datasets/parulpandey/palmer-archipelago-antarctica-penguin-data}
-    {kaggle.com/datasets/parulpandey/palmer-archipelago-antarctica-penguin-data}
-\end{itemize}
+The dataset used in this study is the LIDC-IDRI
+database\cite{armato2011lidc}. It can be accessed through The Cancer Imaging
+Archive:
+\href{https://www.cancerimagingarchive.net/collection/lidc-idri/}
+{cancerimagingarchive.net/collection/lidc-idri}. The annotations were read
+with the Python library \texttt{pylidc}, version $0.2.3$.
 
 \subsection{Code}
 
 The code used in this project is divided based on functionality:
 \begin{itemize}
+  \item Python Code (Data Extraction):
+    \href{https://github.com/Bubu-Droid/proj-sem-3/tree/main/python}
+    {Python Code Link}
+
   \item R Code (Computation and Model Fitting):
-    \href{https://github.com/Bubu-Droid/palmer-penguins-lin-reg-sem-2/tree/main/codes/r-codes}
+    \href{https://github.com/Bubu-Droid/proj-sem-3/tree/main/codes/r-codes}
     {R Code Link}
 
-  \item Python Code (Visualization and Plotting):
-    \href{https://github.com/Bubu-Droid/palmer-penguins-lin-reg-sem-2/tree/main/codes/plots}
-    {Python Code Link}
+  \item R Code (Visualization and Plotting):
+    \href{https://github.com/Bubu-Droid/proj-sem-3/tree/main/codes/plots}
+    {Plotting Code Link}
 \end{itemize}
 
 \bibliographystyle{plain}
