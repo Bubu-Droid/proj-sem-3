@@ -57,7 +57,7 @@ The user's global latexmkrc puts aux files in `buildtmp/` (ignored).
 `main.pdf` is committed. Numbers in `main.tex` are typed in by hand
 from `codes/r-codes/` output, so update them when the data or scripts change. Do not double-space:
 keep the style's default one-and-a-half spacing. Author, roll number
-(`\rollno`) and date are placeholders in `main.tex`; never hard-code personal
+(`\rollno`) and date are set in `main.tex`; never hard-code personal
 details in `statproj.sty`.
 
 ## Data conventions
