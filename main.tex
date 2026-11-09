@@ -196,6 +196,43 @@ median malignancy grade.
   \label{table:summary_grades}
 \end{table}
 
+\Cref{figure:mal_distribution} shows that grade $3$ is by far the most common
+response. \Cref{figure:features_by_grade} shows that log volume, solidity and
+compactness change mainly at grades $4$ and $5$, whereas elongation and
+flatness vary little across grades. Readers often disagree:
+\cref{figure:reader_agreement} shows the difference between the highest and
+lowest rating on nodules with several readers. \Cref{figure:correlation} gives
+the correlations between the predictors.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth,keepaspectratio]{./codes/plots/data-description/mal-distribution.pdf}
+  \caption{Distribution of the Median Grade and of Individual Ratings
+  (Training Set)}
+  \label{figure:mal_distribution}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth,keepaspectratio]{./codes/plots/data-description/features-by-grade.pdf}
+  \caption{Primary Features by Median Malignancy Grade (Training Set)}
+  \label{figure:features_by_grade}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth,keepaspectratio]{./codes/plots/data-description/reader-agreement.pdf}
+  \caption{Range of Ratings per Nodule, by Number of Readers (Training Set)}
+  \label{figure:reader_agreement}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth,keepaspectratio]{./codes/plots/data-description/correlation.pdf}
+  \caption{Spearman Correlations Between the Predictors (Training Set)}
+  \label{figure:correlation}
+\end{figure}
+
 \subsection{Data Source}
 
 The dataset used in this study is the LIDC-IDRI
@@ -315,6 +352,17 @@ predictor, holding the others constant.
     are included.
 \end{itemize}
 
+\Cref{figure:probability_curves} shows the fitted probabilities as size
+increases, with the other predictors at their means.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth,keepaspectratio]{./codes/plots/model-formulation/probability-curves.pdf}
+  \caption{Predicted Probability of Each Grade Against Log Volume,
+  Primary Model}
+  \label{figure:probability_curves}
+\end{figure}
+
 \paragraph{Secondary Model}
 The geometric features only describe the outline of a nodule, whereas
 radiologists also judge its appearance on the scan. We therefore add
@@ -381,6 +429,17 @@ log-likelihood $-2150.257$. The estimates are given in
     radiologists who rate malignancy, so these associations may partly
     reflect a reader's overall impression of a nodule.
 \end{itemize}
+
+\Cref{figure:odds_ratio_forest} compares the odds ratios of all the models,
+including the EM estimates of the next section, which have no confidence
+intervals.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth,keepaspectratio]{./codes/plots/model-formulation/odds-ratio-forest.pdf}
+  \caption{Odds Ratios per Standard Deviation Increase}
+  \label{figure:odds_ratio_forest}
+\end{figure}
 
 \subsection{Latent True-Grade Model (EM Algorithm)}
 
@@ -525,6 +584,24 @@ model, and \cref{table:em_pi} gives the estimated matrix $\hat{\pi}$.
   \caption{Estimated Rating Probabilities $\hat{\pi}_{kr}$}
   \label{table:em_pi}
 \end{table}
+
+\Cref{figure:em_rating_probs} shows $\hat{\pi}$ as a heatmap, and
+\cref{figure:em_convergence} shows the observed-data log-likelihood rising at
+every iteration, as expected for EM.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.55\textwidth,keepaspectratio]{./codes/plots/model-formulation/em-rating-probs.pdf}
+  \caption{Estimated Rating Probabilities $\hat{\pi}_{kr}$}
+  \label{figure:em_rating_probs}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth,keepaspectratio]{./codes/plots/model-formulation/em-convergence.pdf}
+  \caption{Log-Likelihood Across EM Iterations}
+  \label{figure:em_convergence}
+\end{figure}
 
 \paragraph{Interpretation}
 \begin{itemize}
@@ -832,6 +909,16 @@ of the primary model change across thresholds when all predictors are free.
   \label{table:po_thresholds}
 \end{table}
 
+\Cref{figure:threshold_odds_ratios} shows the same odds ratios, with a dotted
+line at the single proportional odds estimate and a dashed line at $1$.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth,keepaspectratio]{./codes/plots/model-analysis/threshold-odds-ratios.pdf}
+  \caption{Odds Ratios at Each Threshold, Primary Model}
+  \label{figure:threshold_odds_ratios}
+\end{figure}
+
 Size matters much more for separating the high grades than the low ones, so
 its single odds ratio is a summary rather than a constant multiplier. The
 effects of flatness and compactness change direction across thresholds, so
@@ -897,6 +984,13 @@ The baseline always predicts grade $3$, the most common training grade.
   \caption{Number of Test Nodules Predicted at Each Grade}
   \label{table:test_counts}
 \end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth,keepaspectratio]{./codes/plots/model-testing/predicted-grade-counts.pdf}
+  \caption{Number of Test Nodules at Each Grade: Actual and Predicted}
+  \label{figure:predicted_grade_counts}
+\end{figure}
 
 The naive secondary model has the lowest errors, and the naive primary model
 improves only slightly on the baseline. The EM model does not improve on the
@@ -1025,6 +1119,17 @@ on the rating scale.
   \caption{Triage Rule on the Test Set}
   \label{table:triage}
 \end{table}
+
+\Cref{figure:triage_curve} shows the trade-off between sensitivity and workload
+as $\tau$ varies. The three curves almost coincide, so the models order
+nodules very similarly, and all are well above random flagging.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth,keepaspectratio]{./codes/plots/model-testing/triage-curve.pdf}
+  \caption{Sensitivity Against Workload on the Test Set}
+  \label{figure:triage_curve}
+\end{figure}
 
 \subsection{Recommendation}
 
