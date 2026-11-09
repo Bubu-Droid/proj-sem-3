@@ -29,6 +29,8 @@ Rscript codes/r-codes/summary-*.R      # prints numbers used in main.tex
 Rscript codes/r-codes/eda-summary.R    # prints numbers used in main.tex
 Rscript codes/r-codes/polr-fit.R       # fits the naive PO models; prints numbers used in main.tex
 Rscript codes/r-codes/em-fit.R         # fits the EM model; prints numbers used in main.tex
+Rscript codes/r-codes/hypo-test.R      # LRTs and proportional odds tests; prints numbers used in main.tex
+Rscript codes/r-codes/hypo-test-em.R   # LRTs for the EM model; prints numbers used in main.tex
 Rscript codes/plots/eda/<figure>.R     # -> codes/plots/eda/<figure>.pdf
 ```
 
