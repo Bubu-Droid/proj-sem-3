@@ -170,6 +170,13 @@ cat("Mean rating (all ratings) per modal grade:",
       sum(sweep(C_all[cl == k, , drop = FALSE], 2, seq_len(K), "*")) /
         sum(C_all[cl == k, ]))), collapse = " & "), "\n")
 
+# Results for the plots in codes/plots/
+write.csv(data.frame(iteration = seq_along(best$trace), loglik = best$trace),
+          "data/processed/em_trace.csv", row.names = FALSE)
+write.csv(best$Pi, "data/processed/em_pi.csv", row.names = FALSE)
+write.csv(data.frame(predictor = PRIMARY, beta = best$beta[PRIMARY]),
+          "data/processed/em_coef.csv", row.names = FALSE)
+
 # ======================================
 #   FIT WITHOUT COVARIATES
 # ======================================
