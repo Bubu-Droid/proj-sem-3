@@ -31,7 +31,8 @@ Rscript codes/r-codes/polr-fit.R       # fits the naive PO models; prints number
 Rscript codes/r-codes/em-fit.R         # fits the EM model; prints numbers used in main.tex
 Rscript codes/r-codes/hypo-test.R      # LRTs and proportional odds tests; prints numbers used in main.tex
 Rscript codes/r-codes/hypo-test-em.R   # LRTs for the EM model; prints numbers used in main.tex
-Rscript codes/plots/eda/<figure>.R     # -> codes/plots/eda/<figure>.pdf
+Rscript codes/r-codes/test-eval.R      # test-set errors, reader benchmark, triage rule; prints numbers used in main.tex
+Rscript codes/plots/<section>/<figure>.R  # -> codes/plots/<section>/<figure>.pdf (after the fits)
 ```
 
 `data/raw/annotations.csv` is the master file and is never edited by hand.
@@ -61,11 +62,14 @@ details in `statproj.sty`.
 
 ## Data conventions
 
-- `nodules_train_trimmed.csv` (written by `clean-data.R`, used by `em-fit.R`) drops
-  training ratings at least 2 grades from their nodule's `mal_median_raw`. Its
-  `mal_median` keeps its value from all ratings. Nodule `997_0` keeps no ratings. All
-  other processed CSVs, the naive models and the test set keep all ratings. In the
-  report this is disclosed in the abstract only.
+- `nodules_train_trimmed.csv` (written by `clean-data.R`) drops training ratings at
+  least 2 grades from their nodule's original `mal_median_raw`, then recomputes the
+  median columns from the kept ratings. Nodule `997_0` keeps no ratings, so its median
+  is NA. All training models (naive and EM) use this file. Reader-agreement statistics,
+  the other processed CSVs and the test set keep all ratings. In the report this is
+  disclosed in the abstract only.
+- `em-fit.R` writes `em_trace.csv`, `em_pi.csv` and `em_coef.csv`, and `test-eval.R` writes
+  `test_predictions.csv` and `test_tau.csv`, to `data/processed/` for the plot scripts.
 - Unit of analysis is the **nodule** (`nodule_id` = `<scan_id>_<cluster>`),
   not the annotation. Train/test split is by **patient**.
 - `reader_slot` / `R1..R4` order is arbitrary: LIDC reader identities are not
