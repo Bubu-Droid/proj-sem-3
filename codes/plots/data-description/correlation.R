@@ -1,21 +1,19 @@
 # Run from the repository root:
-#   Rscript codes/plots/eda/correlation.R
+#   Rscript codes/plots/data-description/correlation.R
 
 nod <- read.csv("data/processed/nodules_train.csv", stringsAsFactors = FALSE)
 
-GEOM <- c("diameter", "log_volume", "log_surface_area", "log_convex_volume",
-          "bbox_z", "n_slices", "elongation", "flatness", "solidity",
-          "compactness")
-LABELS <- c(diameter = "Diameter (mm)", log_volume = "log Volume",
-            log_surface_area = "log Surface area",
-            log_convex_volume = "log Convex volume", bbox_z = "Height (mm)",
-            n_slices = "Slices", elongation = "Elongation",
+GEOM <- c("log_volume", "elongation", "flatness", "solidity", "compactness",
+          "spiculation", "lobulation", "margin", "texture", "sphericity")
+LABELS <- c(log_volume = "log Volume", elongation = "Elongation",
             flatness = "Flatness", solidity = "Solidity",
-            compactness = "Compactness")
+            compactness = "Compactness", spiculation = "Spiculation",
+            lobulation = "Lobulation", margin = "Margin", texture = "Texture",
+            sphericity = "Sphericity")
 
 cm <- cor(nod[GEOM], use = "pairwise.complete.obs", method = "spearman")
 
-pdf("codes/plots/eda/correlation.pdf", width = 7.5, height = 7)
+pdf("codes/plots/data-description/correlation.pdf", width = 7.5, height = 7)
 par(mar = c(9, 9, 1, 1))
 p <- length(GEOM)
 pal <- colorRampPalette(c("#b2182b", "#f7f7f7", "#2166ac"))(101)
