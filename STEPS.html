@@ -335,9 +335,13 @@ you move on.</li>
 │   │   ├── polr-fit.R
 │   │   ├── em-fit.R
 │   │   ├── hypo-test.R
-│   │   └── hypo-test-em.R
-│   └── plots/
-│       └── eda/        # one .R and one .pdf per figure
+│   │   ├── hypo-test-em.R
+│   │   └── test-eval.R
+│   └── plots/          # one .R and one .pdf per figure
+│       ├── data-description/
+│       ├── model-formulation/
+│       ├── model-analysis/
+│       └── model-testing/
 └── slides/
     └── slides.tex</code></pre>
 <h3 id="02-python-environment">0.2 Python environment</h3>
@@ -548,7 +552,8 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="
 </tr>
 <tr>
 <td><code>nodules_train_trimmed.csv</code></td>
-<td>Training table without outlying ratings, used by the EM model</td>
+<td>Training table without outlying ratings, used by all training
+models</td>
 </tr>
 <tr>
 <td><code>median_ties.csv</code></td>
@@ -629,17 +634,18 @@ ratings.</li>
 <li>Correlation heatmap of predictors (expect diameter, log-volume,
 log-surface-area to be ≈ 0.9+ correlated).</li>
 <li><strong>Inter-reader agreement:</strong> proportion of nodules where
-readers disagree; Fleiss' κ or the distribution of (max − min) rating
-per nodule. This motivates the EM model.</li>
+readers disagree, and the distribution of (max − min) rating per nodule.
+This motivates the EM model.</li>
 </ul>
 <p>☐ <code>data/processed/nodules_train.csv</code>,
-<code>nodules_test.csv</code>; 3–4 EDA figures in
-<code>codes/plots/eda/</code>.</p>
+<code>nodules_test.csv</code>; EDA figures in
+<code>codes/plots/data-description/</code>.</p>
 <hr />
 <h2 id="step-4--naive-proportional-odds-model-week-3">Step 4 — Naive
 proportional odds model (Week 3)</h2>
-<p>Script: <code>codes/r-codes/polr-fit.R</code>. Topic 2. This is the
-baseline the EM model will be compared against.</p>
+<p>Script: <code>codes/r-codes/polr-fit.R</code>. Topic 2. Fitted on
+<code>nodules_train_trimmed.csv</code>. This is the baseline the EM
+model will be compared against.</p>
 <h3 id="41-fit">4.1 Fit</h3>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>m_naive <span class="ot">&lt;-</span> <span class="fu">polr</span>(mal_median <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3, <span class="at">data =</span> train, <span class="at">Hess =</span> <span class="cn">TRUE</span>, <span class="at">method =</span> <span class="st">&quot;logistic&quot;</span>)</span>
@@ -676,11 +682,12 @@ extension (Phase 4 of <code>PLAN.md</code>).</p>
 <h3 id="51-the-model">5.1 The model</h3>
 <p>Fit on <code>data/processed/nodules_train_trimmed.csv</code>, which
 drops training ratings at least 2 grades from their nodule's unrounded
-median, and disclose this in the abstract. The naive models and the test
-set keep all ratings. The rule was chosen because a first fit with all
-ratings gave implausible latent classes. Because it reduces measured
-disagreement, do not use <span class="math inline">\(\hat\pi\)</span> to
-make claims about reader reliability.</p>
+median and recomputes the medians, and disclose this in the abstract.
+The naive models use this file too (Step 4). The test set keeps all
+ratings. The rule was chosen because a first fit with all ratings gave
+implausible latent classes. Because it reduces measured disagreement, do
+not use <span class="math inline">\(\hat\pi\)</span> to make claims
+about reader reliability.</p>
 <ul>
 <li>Latent true grade <span class="math inline">\(Z_i \in
 \{1,\dots,5\}\)</span> with <span class="math inline">\(P(Z_i \le k \mid
@@ -867,23 +874,29 @@ on the test set (Week 6)</h2>
 <p>Touch the test set <strong>once</strong>, after all modelling
 decisions are frozen.</p>
 <ol type="1">
-<li>Apply the training-set standardisation to the test predictors.</li>
-<li>For each model (naive primary, naive secondary, EM), compute:
+<li>Apply the training-set standardisation to the test predictors. The
+test set keeps all ratings.</li>
+<li>For each model (naive primary, naive secondary, EM), turn its
+predicted probabilities into a predicted grade, the most likely one, and
+compare it with <code>mal_median</code>. EM's latent grades do not match
+the rating scale exactly, so first convert them with <span
+class="math inline">\(P(R = r \mid x) = \sum_k P(Z = k \mid
+x)\,\pi_{kr}\)</span>.</li>
+<li>Compute three errors:
 <ul>
-<li>accuracy and mean absolute error of the predicted category (mode of
-<span class="math inline">\(P(Z = k \mid x)\)</span>) vs.
-<code>mal_median</code>;</li>
-<li>quadratic-weighted Cohen's κ;</li>
-<li>AUC for the binary triage rule "malignancy ≥ 4" using <span
-class="math inline">\(P(Z \ge 4 \mid x)\)</span>;</li>
-<li>test log-likelihood of the observed <strong>reader ratings</strong>
-(for the EM model this is the observed-data log-likelihood; it is the
-fairest comparison).</li>
+<li>misclassification rate: the share of nodules whose predicted grade
+is wrong;</li>
+<li>mean absolute error (MAE) of the predicted grade;</li>
+<li>root mean squared error (RMSE) of the predicted grade.</li>
 </ul></li>
-<li>Calibration plot for <span class="math inline">\(P(Z \ge 4 \mid
-x)\)</span> (binned predicted vs. observed proportion).</li>
+<li>Compare the models by their reduction in each error relative to a
+baseline that always predicts the most common training grade.</li>
+<li>Reader benchmark: on multi-reader nodules, score each reader and
+each model against the median of the other readers.</li>
 </ol>
-<p>☐ Test-set performance table; calibration plot.</p>
+<p>Script: <code>codes/r-codes/test-eval.R</code>.</p>
+<p>☐ Test-set error table with the improvement over the baseline; reader
+benchmark table.</p>
 <hr />
 <h2 id="step-8--policy-interpretation-week-7">Step 8 — Policy
 interpretation (Week 7)</h2>
@@ -892,9 +905,9 @@ interpretation (Week 7)</h2>
 <ul>
 <li>Propose a rule such as: flag a nodule for priority review if <span
 class="math inline">\(P(Z \ge 4 \mid x) &gt; \tau\)</span>. Choose <span
-class="math inline">\(\tau\)</span> from the test-set ROC (e.g.
-sensitivity ≥ 0.9) and report the resulting workload (fraction
-flagged).</li>
+class="math inline">\(\tau\)</span> on the training set (e.g.
+sensitivity ≥ 0.9), then report the sensitivity and workload (fraction
+flagged) on the test set.</li>
 <li>Do not use <span class="math inline">\(\hat\pi\)</span> to make
 claims about reader reliability, because the EM fit removes outlying
 ratings (Step 5.1).</li>
@@ -953,13 +966,10 @@ text.</li>
 <li>B: Full coefficient tables, odds-ratio plot, probability curves for
 each category.</li>
 <li>C: EM derivation, monotonicity proof, log-likelihood trace.</li>
-<li>D: LRT tables; calibration plot.</li>
+<li>D: LRT tables.</li>
 </ul>
 <h3 id="94-bibliography-minimum">9.4 Bibliography (minimum)</h3>
-<p>Armato et al. (2011, <em>Medical Physics</em>) for LIDC-IDRI; Hancock
-&amp; Magnan (2016) for pylidc; McCullagh (1980) for PO models;
-Dempster, Laird &amp; Rubin (1977); Dawid &amp; Skene (1979);
-Agresti.</p>
+<p>Armato et al. (2011, <em>Medical Physics</em>) for LIDC-IDRI.</p>
 <p>Compile, check the page count with the appendix excluded, and ask
 someone outside the group to read it once.</p>
 <p>☐ <code>report.pdf</code>, ≤ 5 pages of main text.</p>

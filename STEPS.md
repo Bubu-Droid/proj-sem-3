@@ -40,9 +40,13 @@ proj-sem-3/
 │   │   ├── polr-fit.R
 │   │   ├── em-fit.R
 │   │   ├── hypo-test.R
-│   │   └── hypo-test-em.R
-│   └── plots/
-│       └── eda/        # one .R and one .pdf per figure
+│   │   ├── hypo-test-em.R
+│   │   └── test-eval.R
+│   └── plots/          # one .R and one .pdf per figure
+│       ├── data-description/
+│       ├── model-formulation/
+│       ├── model-analysis/
+│       └── model-testing/
 └── slides/
     └── slides.tex
 ```
@@ -154,7 +158,7 @@ Base R only. Writes to `data/processed/`:
 |---|---|
 | `nodules.csv` | Master nodule table: every column below plus `calcification`, `internalStructure` and `split` |
 | `nodules_train.csv`, `nodules_test.csv` | Modelling tables (no nominal ratings, no `split`) |
-| `nodules_train_trimmed.csv` | Training table without outlying ratings, used by the EM model |
+| `nodules_train_trimmed.csv` | Training table without outlying ratings, used by all training models |
 | `median_ties.csv` | Nodules whose median malignancy fell between two grades |
 
 ### 3.1 Decide which features are predictors
@@ -199,15 +203,15 @@ Split at the **patient** level (70/30, seed `20261105`), not the nodule level, s
 - Bar chart of `mal_median`; bar chart of all individual ratings.
 - Boxplots of each geometric feature by `mal_median`.
 - Correlation heatmap of predictors (expect diameter, log-volume, log-surface-area to be ≈ 0.9+ correlated).
-- **Inter-reader agreement:** proportion of nodules where readers disagree; Fleiss' κ or the distribution of (max − min) rating per nodule. This motivates the EM model.
+- **Inter-reader agreement:** proportion of nodules where readers disagree, and the distribution of (max − min) rating per nodule. This motivates the EM model.
 
-☐ `data/processed/nodules_train.csv`, `nodules_test.csv`; 3–4 EDA figures in `codes/plots/eda/`.
+☐ `data/processed/nodules_train.csv`, `nodules_test.csv`; EDA figures in `codes/plots/data-description/`.
 
 ---
 
 ## Step 4 — Naive proportional odds model (Week 3)
 
-Script: `codes/r-codes/polr-fit.R`. Topic 2. This is the baseline the EM model will be compared against.
+Script: `codes/r-codes/polr-fit.R`. Topic 2. Fitted on `nodules_train_trimmed.csv`. This is the baseline the EM model will be compared against.
 
 ### 4.1 Fit
 
@@ -244,7 +248,7 @@ Script: `codes/r-codes/em-fit.R`. This is the core of the extension (Phase 4 of 
 
 ### 5.1 The model
 
-Fit on `data/processed/nodules_train_trimmed.csv`, which drops training ratings at least 2 grades from their nodule's unrounded median, and disclose this in the abstract. The naive models and the test set keep all ratings. The rule was chosen because a first fit with all ratings gave implausible latent classes. Because it reduces measured disagreement, do not use $\hat\pi$ to make claims about reader reliability.
+Fit on `data/processed/nodules_train_trimmed.csv`, which drops training ratings at least 2 grades from their nodule's unrounded median and recomputes the medians, and disclose this in the abstract. The naive models use this file too (Step 4). The test set keeps all ratings. The rule was chosen because a first fit with all ratings gave implausible latent classes. Because it reduces measured disagreement, do not use $\hat\pi$ to make claims about reader reliability.
 
 - Latent true grade $Z_i \in \{1,\dots,5\}$ with $P(Z_i \le k \mid x_i) = \operatorname{logit}^{-1}(\alpha_k - x_i^\top\beta)$.
 - Reader ratings: $P(R_{ij} = r \mid Z_i = k) = \pi_{kr}$, one shared $5\times5$ matrix, rows summing to 1.
@@ -367,15 +371,18 @@ Write a short paragraph linking this to Neyman–Pearson: the LRT is the most po
 
 Touch the test set **once**, after all modelling decisions are frozen.
 
-1. Apply the training-set standardisation to the test predictors.
-2. For each model (naive primary, naive secondary, EM), compute:
-   - accuracy and mean absolute error of the predicted category (mode of $P(Z = k \mid x)$) vs. `mal_median`;
-   - quadratic-weighted Cohen's κ;
-   - AUC for the binary triage rule "malignancy ≥ 4" using $P(Z \ge 4 \mid x)$;
-   - test log-likelihood of the observed **reader ratings** (for the EM model this is the observed-data log-likelihood; it is the fairest comparison).
-3. Calibration plot for $P(Z \ge 4 \mid x)$ (binned predicted vs. observed proportion).
+1. Apply the training-set standardisation to the test predictors. The test set keeps all ratings.
+2. For each model (naive primary, naive secondary, EM), turn its predicted probabilities into a predicted grade, the most likely one, and compare it with `mal_median`. EM's latent grades do not match the rating scale exactly, so first convert them with $P(R = r \mid x) = \sum_k P(Z = k \mid x)\,\pi_{kr}$.
+3. Compute three errors:
+   - misclassification rate: the share of nodules whose predicted grade is wrong;
+   - mean absolute error (MAE) of the predicted grade;
+   - root mean squared error (RMSE) of the predicted grade.
+4. Compare the models by their reduction in each error relative to a baseline that always predicts the most common training grade.
+5. Reader benchmark: on multi-reader nodules, score each reader and each model against the median of the other readers.
 
-☐ Test-set performance table; calibration plot.
+Script: `codes/r-codes/test-eval.R`.
+
+☐ Test-set error table with the improvement over the baseline; reader benchmark table.
 
 ---
 
@@ -383,7 +390,7 @@ Touch the test set **once**, after all modelling decisions are frozen.
 
 Tie the results to the triage recommendation in `PLAN.md`:
 
-- Propose a rule such as: flag a nodule for priority review if $P(Z \ge 4 \mid x) > \tau$. Choose $\tau$ from the test-set ROC (e.g. sensitivity ≥ 0.9) and report the resulting workload (fraction flagged).
+- Propose a rule such as: flag a nodule for priority review if $P(Z \ge 4 \mid x) > \tau$. Choose $\tau$ on the training set (e.g. sensitivity ≥ 0.9), then report the sensitivity and workload (fraction flagged) on the test set.
 - Do not use $\hat\pi$ to make claims about reader reliability, because the EM fit removes outlying ratings (Step 5.1).
 
 **Limitations you must state:**
@@ -426,11 +433,11 @@ Tie the results to the triage recommendation in `PLAN.md`:
 - A: Full code (use `listings` or `minted`, or `\input` the scripts).
 - B: Full coefficient tables, odds-ratio plot, probability curves for each category.
 - C: EM derivation, monotonicity proof, log-likelihood trace.
-- D: LRT tables; calibration plot.
+- D: LRT tables.
 
 ### 9.4 Bibliography (minimum)
 
-Armato et al. (2011, *Medical Physics*) for LIDC-IDRI; Hancock & Magnan (2016) for pylidc; McCullagh (1980) for PO models; Dempster, Laird & Rubin (1977); Dawid & Skene (1979); Agresti.
+Armato et al. (2011, *Medical Physics*) for LIDC-IDRI.
 
 Compile, check the page count with the appendix excluded, and ask someone outside the group to read it once.
 
