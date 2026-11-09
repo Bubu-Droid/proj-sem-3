@@ -11,6 +11,7 @@ Rscript codes/r-codes/summary-all.R
 Rscript codes/r-codes/summary-grades.R
 Rscript codes/r-codes/eda-summary.R
 Rscript codes/r-codes/polr-fit.R
+Rscript codes/r-codes/em-fit.R
 
 Rscript codes/plots/eda/mal-distribution.R
 Rscript codes/plots/eda/features-by-grade.R

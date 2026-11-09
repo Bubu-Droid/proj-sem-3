@@ -28,6 +28,7 @@ Rscript codes/r-codes/check-data.R     # sanity checks; exits non-zero on failur
 Rscript codes/r-codes/summary-*.R      # prints numbers used in main.tex
 Rscript codes/r-codes/eda-summary.R    # prints numbers used in main.tex
 Rscript codes/r-codes/polr-fit.R       # fits the naive PO models; prints numbers used in main.tex
+Rscript codes/r-codes/em-fit.R         # fits the EM model; prints numbers used in main.tex
 Rscript codes/plots/eda/<figure>.R     # -> codes/plots/eda/<figure>.pdf
 ```
 
@@ -58,6 +59,11 @@ details in `statproj.sty`.
 
 ## Data conventions
 
+- `nodules_train_trimmed.csv` (written by `clean-data.R`, used by `em-fit.R`) drops
+  training ratings at least 2 grades from their nodule's `mal_median_raw`. Its
+  `mal_median` keeps its value from all ratings. Nodule `997_0` keeps no ratings. All
+  other processed CSVs, the naive models and the test set keep all ratings. In the
+  report this is disclosed in the abstract only.
 - Unit of analysis is the **nodule** (`nodule_id` = `<scan_id>_<cluster>`),
   not the annotation. Train/test split is by **patient**.
 - `reader_slot` / `R1..R4` order is arbitrary: LIDC reader identities are not
