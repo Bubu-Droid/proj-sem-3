@@ -268,23 +268,20 @@ proportional odds model (Week 3)</a></li>
 <li><a href="#step-5--em-latent-true-grade-model-weeks-45"
 id="toc-step-5--em-latent-true-grade-model-weeks-45">Step 5 — EM latent
 true-grade model (Weeks 4–5)</a></li>
-<li><a href="#step-6--simulation-study-week-5"
-id="toc-step-6--simulation-study-week-5">Step 6 — Simulation study (Week
-5)</a></li>
-<li><a href="#step-7--diagnostics-and-hypothesis-tests-week-6"
-id="toc-step-7--diagnostics-and-hypothesis-tests-week-6">Step 7 —
+<li><a href="#step-6--diagnostics-and-hypothesis-tests-week-6"
+id="toc-step-6--diagnostics-and-hypothesis-tests-week-6">Step 6 —
 Diagnostics and hypothesis tests (Week 6)</a></li>
-<li><a href="#step-8--evaluation-on-the-test-set-week-6"
-id="toc-step-8--evaluation-on-the-test-set-week-6">Step 8 — Evaluation
+<li><a href="#step-7--evaluation-on-the-test-set-week-6"
+id="toc-step-7--evaluation-on-the-test-set-week-6">Step 7 — Evaluation
 on the test set (Week 6)</a></li>
-<li><a href="#step-9--policy-interpretation-week-7"
-id="toc-step-9--policy-interpretation-week-7">Step 9 — Policy
+<li><a href="#step-8--policy-interpretation-week-7"
+id="toc-step-8--policy-interpretation-week-7">Step 8 — Policy
 interpretation (Week 7)</a></li>
-<li><a href="#step-10--write-the-report-weeks-78"
-id="toc-step-10--write-the-report-weeks-78">Step 10 — Write the report
+<li><a href="#step-9--write-the-report-weeks-78"
+id="toc-step-9--write-the-report-weeks-78">Step 9 — Write the report
 (Weeks 7–8)</a></li>
-<li><a href="#step-11--slides-and-defense-week-8"
-id="toc-step-11--slides-and-defense-week-8">Step 11 — Slides and defense
+<li><a href="#step-10--slides-and-defense-week-8"
+id="toc-step-10--slides-and-defense-week-8">Step 10 — Slides and defense
 (Week 8)</a></li>
 <li><a
 href="#suggested-timeline-8-weeks-compress-if-your-deadline-is-sooner"
@@ -304,8 +301,8 @@ is. This file says <em>how</em> to do it and in what order.</p>
 <li><strong>Python</strong> is used only for data extraction
 (<code>pylidc</code> is Python-only).</li>
 <li><strong>R</strong> is used for all statistics
-(<code>MASS::polr</code>, <code>ordinal</code>, <code>brant</code> are
-mature and accept case weights, which the EM M-step needs).</li>
+(<code>MASS::polr</code>, <code>ordinal</code> are mature and accept
+case weights, which the EM M-step needs).</li>
 <li><code>☐</code> marks a concrete deliverable that should exist before
 you move on.</li>
 </ul>
@@ -338,7 +335,7 @@ you move on.</li>
 │   │   ├── polr-fit.R
 │   │   ├── em-fit.R
 │   │   ├── hypo-test.R
-│   │   └── simulation.R
+│   │   └── hypo-test-em.R
 │   └── plots/
 │       └── eda/        # one .R and one .pdf per figure
 └── slides/
@@ -364,8 +361,7 @@ Step 4. Some dependencies of <code>ordinal</code> compile Fortran, so
 install a Fortran compiler first:</p>
 <div class="sourceCode" id="cb3"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> pacman <span class="at">-S</span> gcc-fortran</span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">&quot;ordinal&quot;</span>, <span class="st">&quot;brant&quot;</span>,</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;ggplot2&quot;</span>, <span class="st">&quot;corrplot&quot;</span>, <span class="st">&quot;xtable&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">&quot;ordinal&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>, <span class="st">&quot;corrplot&quot;</span>, <span class="st">&quot;xtable&quot;</span>))</span></code></pre></div>
 <p>☐ <code>pylidc</code> returns 1018 scans and 6859 annotations; all R
 packages load.</p>
 <hr />
@@ -391,13 +387,6 @@ logistic <span class="math inline">\(\varepsilon\)</span> and thresholds
 class="math inline">\(e^{\beta}\)</span> as an odds ratio</td>
 <td>Agresti, <em>Categorical Data Analysis</em>, ch. on ordinal models
 (Topic 2 notes)</td>
-</tr>
-<tr>
-<td>Brant test</td>
-<td>It is a <strong>Wald</strong> test comparing separate binary-logit
-fits at each threshold; know the alternative LR test of partial
-proportional odds (<code>ordinal::nominal_test</code>)</td>
-<td>Brant (1990), <em>Biometrics</em> 46(4)</td>
 </tr>
 <tr>
 <td>Wilks' theorem / LRT</td>
@@ -631,7 +620,7 @@ patient</h3>
 patient never appear in both sets. The assignment is the
 <code>split</code> column of <code>nodules.csv</code>.</p>
 <p><strong>All model fitting uses the training set only.</strong> The
-test set is touched once, in Step 8.</p>
+test set is touched once, in Step 7.</p>
 <h3 id="36-exploratory-analysis">3.6 Exploratory analysis</h3>
 <ul>
 <li>Bar chart of <code>mal_median</code>; bar chart of all individual
@@ -824,54 +813,26 @@ class="math inline">\(w_i\)</span>: which nodules are "ambiguous".</li>
 </ul>
 <p>☐ Converged EM fit; four outputs above.</p>
 <hr />
-<h2 id="step-6--simulation-study-week-5">Step 6 — Simulation study (Week
-5)</h2>
-<p>Script: <code>codes/r-codes/simulation.R</code>. This shows your EM
-implementation is correct, and it is a strong appendix item.</p>
-<ol type="1">
-<li>Fix "true" values: <span class="math inline">\(\beta\)</span> and
-<span class="math inline">\(\alpha\)</span> near your EM estimates, and
-a realistic <span class="math inline">\(\pi\)</span> (e.g. 0.6 on the
-diagonal, 0.15 on adjacent cells, the rest small).</li>
-<li>Simulate <span class="math inline">\(X\)</span> by resampling rows
-of the real design matrix, <span class="math inline">\(Z_i\)</span> from
-the PO model, and 1–4 ratings per nodule from <span
-class="math inline">\(\pi\)</span> (matching the real distribution of
-<code>n_readers</code>).</li>
-<li>Fit the EM model and the naive median-rating model.</li>
-<li>Repeat 200 times. Report bias and RMSE of <span
-class="math inline">\(\hat\beta\)</span> for both methods, and coverage
-of bootstrap CIs if time allows.</li>
-</ol>
-<p>Expected finding: the naive model's <span
-class="math inline">\(\hat\beta\)</span> is attenuated (biased toward 0)
-because the median rating is a noisy version of <span
-class="math inline">\(Z\)</span>; EM is approximately unbiased. Whether
-or not that happens, report it.</p>
-<p>☐ Simulation table (bias / RMSE, naive vs EM).</p>
-<hr />
-<h2 id="step-7--diagnostics-and-hypothesis-tests-week-6">Step 7 —
+<h2 id="step-6--diagnostics-and-hypothesis-tests-week-6">Step 6 —
 Diagnostics and hypothesis tests (Week 6)</h2>
-<p>Script: <code>codes/r-codes/hypo-test.R</code>. Phase 5 of
+<p>Scripts: <code>codes/r-codes/hypo-test.R</code> (naive models) and
+<code>codes/r-codes/hypo-test-em.R</code> (EM model). Phase 5 of
 <code>PLAN.md</code>.</p>
-<h3 id="71-proportional-odds-assumption">7.1 Proportional odds
+<h3 id="61-proportional-odds-assumption">6.1 Proportional odds
 assumption</h3>
 <ul>
-<li><p><strong>Brant test</strong> (a Wald test) on the naive model:</p>
-<div class="sourceCode" id="cb9"><pre
-class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brant)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">brant</span>(m_naive)          <span class="co"># omnibus + per-variable chi-square tests</span></span></code></pre></div></li>
-<li><p><strong>Likelihood-ratio alternative:</strong> fit with
-<code>ordinal::clm</code> and run <code>nominal_test(model)</code>,
-which compares the PO model with a partial PO model that frees each
-predictor's coefficient across thresholds.</p></li>
-<li><p>If a variable violates PO, either report it as a limitation or
-fit a partial PO model for that variable
-(<code>clm(..., nominal = ~ x_bad)</code>).</p></li>
-<li><p>Note: these tests are applied to the naive model; in the EM model
-PO is assumed for the latent grade.</p></li>
+<li><strong>Likelihood ratio test:</strong> fit with
+<code>ordinal::clm</code> and compare the PO model with a model that
+frees each coefficient across thresholds, both one predictor at a time
+(<code>nominal_test(model)</code>) and all predictors together
+(<code>nominal = ~ ...</code>).</li>
+<li>If a variable violates PO, either report it as a limitation or fit a
+partial PO model for that variable
+(<code>clm(..., nominal = ~ x_bad)</code>).</li>
+<li>Note: these tests are applied to the naive model; in the EM model PO
+is assumed for the latent grade.</li>
 </ul>
-<h3 id="72-likelihood-ratio-tests-wilks">7.2 Likelihood-ratio tests
+<h3 id="62-likelihood-ratio-tests-wilks">6.2 Likelihood-ratio tests
 (Wilks)</h3>
 <p>For nested models <span class="math inline">\(M_0 \subset
 M_1\)</span>: <span class="math inline">\(\Lambda = -2(\ell_0 - \ell_1)
@@ -893,15 +854,15 @@ likelihood.</li>
 <p>Write a short paragraph linking this to Neyman–Pearson: the LRT is
 the most powerful test in the simple-vs-simple case, and Wilks gives its
 asymptotic null distribution in the composite case.</p>
-<h3 id="73-model-fit">7.3 Model fit</h3>
+<h3 id="63-model-fit">6.3 Model fit</h3>
 <ul>
 <li>For the EM model, compare against the plain Dawid–Skene model
 without covariates (LRT: are the features informative about the true
 grade beyond the readers' ratings?).</li>
 </ul>
-<p>☐ Brant/nominal-test table; LRT table.</p>
+<p>☐ Proportional odds test table; LRT table.</p>
 <hr />
-<h2 id="step-8--evaluation-on-the-test-set-week-6">Step 8 — Evaluation
+<h2 id="step-7--evaluation-on-the-test-set-week-6">Step 7 — Evaluation
 on the test set (Week 6)</h2>
 <p>Touch the test set <strong>once</strong>, after all modelling
 decisions are frozen.</p>
@@ -924,7 +885,7 @@ x)\)</span> (binned predicted vs. observed proportion).</li>
 </ol>
 <p>☐ Test-set performance table; calibration plot.</p>
 <hr />
-<h2 id="step-9--policy-interpretation-week-7">Step 9 — Policy
+<h2 id="step-8--policy-interpretation-week-7">Step 8 — Policy
 interpretation (Week 7)</h2>
 <p>Tie the results to the triage recommendation in
 <code>PLAN.md</code>:</p>
@@ -951,18 +912,18 @@ patients; mention it as possible external validation.)</li>
 a public-health setting such as Indian hospitals is untested.</li>
 </ol>
 <hr />
-<h2 id="step-10--write-the-report-weeks-78">Step 10 — Write the report
+<h2 id="step-9--write-the-report-weeks-78">Step 9 — Write the report
 (Weeks 7–8)</h2>
 <p><code>main.tex</code>. <strong>Max 5 pages, double-spaced,
 A4.</strong> Appendix does not count.</p>
-<h3 id="101-preamble">10.1 Preamble</h3>
-<div class="sourceCode" id="cb10"><pre
-class="sourceCode latex"><code class="sourceCode latex"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="bu">\documentclass</span>[11pt]{<span class="ex">article</span>}</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[a4paper, margin=2.5cm]{<span class="ex">geometry</span>}</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">setspace</span>}<span class="fu">\doublespacing</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">amsmath, amssymb, booktabs, graphicx, hyperref</span>}</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[style=authoryear]{<span class="ex">biblatex</span>}<span class="fu">\addbibresource</span>{refs.bib}</span></code></pre></div>
-<h3 id="102-main-text--page-budget">10.2 Main text (≈ page budget)</h3>
+<h3 id="91-preamble">9.1 Preamble</h3>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode latex"><code class="sourceCode latex"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">\documentclass</span>[11pt]{<span class="ex">article</span>}</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[a4paper, margin=2.5cm]{<span class="ex">geometry</span>}</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">setspace</span>}<span class="fu">\doublespacing</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>{<span class="ex">amsmath, amssymb, booktabs, graphicx, hyperref</span>}</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="bu">\usepackage</span>[style=authoryear]{<span class="ex">biblatex</span>}<span class="fu">\addbibresource</span>{refs.bib}</span></code></pre></div>
+<h3 id="92-main-text--page-budget">9.2 Main text (≈ page budget)</h3>
 <ol type="1">
 <li><strong>Introduction and research questions</strong> (0.5 p).
 Example RQs:
@@ -977,7 +938,7 @@ estimated effects?</li>
 <li><strong>Data</strong> (0.75 p): LIDC-IDRI, pylidc, unit of analysis,
 aggregation, train/test split, counts table.</li>
 <li><strong>Methodology</strong> (1.5 p): PO model → EM latent-grade
-model → Brant/LRT. Equations, not code.</li>
+model → LRTs. Equations, not code.</li>
 <li><strong>Results</strong> (1.5 p): one coefficient table (naive vs
 EM), one key figure (probability curves or <span
 class="math inline">\(\hat\pi\)</span> heatmap), test results in
@@ -985,30 +946,29 @@ text.</li>
 <li><strong>Discussion, policy recommendations, limitations</strong>
 (0.75 p).</li>
 </ol>
-<h3 id="103-appendix-no-page-limit">10.3 Appendix (no page limit)</h3>
+<h3 id="93-appendix-no-page-limit">9.3 Appendix (no page limit)</h3>
 <ul>
 <li>A: Full code (use <code>listings</code> or <code>minted</code>, or
 <code>\input</code> the scripts).</li>
 <li>B: Full coefficient tables, odds-ratio plot, probability curves for
 each category.</li>
 <li>C: EM derivation, monotonicity proof, log-likelihood trace.</li>
-<li>D: Simulation study.</li>
-<li>E: Brant and LRT tables; calibration plot.</li>
+<li>D: LRT tables; calibration plot.</li>
 </ul>
-<h3 id="104-bibliography-minimum">10.4 Bibliography (minimum)</h3>
+<h3 id="94-bibliography-minimum">9.4 Bibliography (minimum)</h3>
 <p>Armato et al. (2011, <em>Medical Physics</em>) for LIDC-IDRI; Hancock
-&amp; Magnan (2016) for pylidc; McCullagh (1980) for PO models; Brant
-(1990); Dempster, Laird &amp; Rubin (1977); Dawid &amp; Skene (1979);
+&amp; Magnan (2016) for pylidc; McCullagh (1980) for PO models;
+Dempster, Laird &amp; Rubin (1977); Dawid &amp; Skene (1979);
 Agresti.</p>
 <p>Compile, check the page count with the appendix excluded, and ask
 someone outside the group to read it once.</p>
 <p>☐ <code>report.pdf</code>, ≤ 5 pages of main text.</p>
 <hr />
-<h2 id="step-11--slides-and-defense-week-8">Step 11 — Slides and defense
+<h2 id="step-10--slides-and-defense-week-8">Step 10 — Slides and defense
 (Week 8)</h2>
 <p><code>slides/slides.tex</code> (Beamer). <strong>Fewer than 16
 slides, 20–25 minutes, 5–7 minutes per member.</strong></p>
-<p>Suggested 13-slide structure and split (assuming 4 members):</p>
+<p>Suggested 12-slide structure and split (assuming 4 members):</p>
 <table>
 <thead>
 <tr>
@@ -1066,21 +1026,16 @@ slides, 20–25 minutes, 5–7 minutes per member.</strong></p>
 </tr>
 <tr>
 <td>10</td>
-<td>Simulation study</td>
-<td>C</td>
-</tr>
-<tr>
-<td>11</td>
-<td>Brant test and LRTs</td>
+<td>Likelihood ratio tests</td>
 <td>D</td>
 </tr>
 <tr>
-<td>12</td>
+<td>11</td>
 <td>Test-set performance and triage rule</td>
 <td>D</td>
 </tr>
 <tr>
-<td>13</td>
+<td>12</td>
 <td>Limitations and conclusions</td>
 <td>D</td>
 </tr>
@@ -1090,11 +1045,10 @@ slides, 20–25 minutes, 5–7 minutes per member.</strong></p>
 <ul>
 <li>Every member should be able to answer questions on every slide, not
 only their own.</li>
-<li>Likely questions: Why not plain logistic regression? Why is Brant a
-Wald test? Why does EM increase the likelihood? Are readers really
-conditionally independent? What does <span
-class="math inline">\(\hat\pi\)</span> mean clinically? Why is
-malignancy not ground truth?</li>
+<li>Likely questions: Why not plain logistic regression? Why does EM
+increase the likelihood? Are readers really conditionally independent?
+What does <span class="math inline">\(\hat\pi\)</span> mean clinically?
+Why is malignancy not ground truth?</li>
 <li>Do two full timed rehearsals.</li>
 </ul>
 <p>☐ <code>slides.pdf</code>; two rehearsals done.</p>
@@ -1134,29 +1088,29 @@ started</td>
 </tr>
 <tr>
 <td>5</td>
-<td>5.4–5.6, 6</td>
-<td>Bootstrap SEs; simulation study</td>
+<td>5.4–5.6</td>
+<td>Bootstrap SEs</td>
 </tr>
 <tr>
 <td>6</td>
-<td>7, 8</td>
+<td>6, 7</td>
 <td>Diagnostics, LRTs, test-set evaluation</td>
 </tr>
 <tr>
 <td>7</td>
-<td>9, 10</td>
+<td>8, 9</td>
 <td>Policy section; report draft</td>
 </tr>
 <tr>
 <td>8</td>
-<td>10, 11</td>
+<td>9, 10</td>
 <td>Report final; slides; rehearsals</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Fallback if time runs short:</strong> the EM model (Steps
-5–6) is the extension. Steps 2–4 and 7–11 alone form a complete project
-that matches the original plan. Get those working first; do not let EM
+<p><strong>Fallback if time runs short:</strong> the EM model (Step 5)
+is the extension. Steps 2–4 and 6–10 alone form a complete project that
+matches the original plan. Get those working first; do not let EM
 debugging block the rest.</p>
 </body>
 </html>

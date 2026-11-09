@@ -5,7 +5,7 @@ A step-by-step guide from an empty folder to the final defense. Read alongside `
 Conventions used below:
 
 - **Python** is used only for data extraction (`pylidc` is Python-only).
-- **R** is used for all statistics (`MASS::polr`, `ordinal`, `brant` are mature and accept case weights, which the EM M-step needs).
+- **R** is used for all statistics (`MASS::polr`, `ordinal` are mature and accept case weights, which the EM M-step needs).
 - `☐` marks a concrete deliverable that should exist before you move on.
 
 ---
@@ -40,7 +40,7 @@ proj-sem-3/
 │   │   ├── polr-fit.R
 │   │   ├── em-fit.R
 │   │   ├── hypo-test.R
-│   │   └── simulation.R
+│   │   └── hypo-test-em.R
 │   └── plots/
 │       └── eda/        # one .R and one .pdf per figure
 └── slides/
@@ -68,8 +68,7 @@ sudo pacman -S gcc-fortran
 
 
 ```r
-install.packages(c("ordinal", "brant",
-                   "ggplot2", "corrplot", "xtable"))
+install.packages(c("ordinal", "ggplot2", "corrplot", "xtable"))
 ```
 
 ☐ `pylidc` returns 1018 scans and 6859 annotations; all R packages load.
@@ -83,7 +82,6 @@ Do this before writing any modelling code. Each item maps to a part of the repor
 | Topic                   | What you must be able to do                                                                                                                                                              | Source                                                                          |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | Proportional odds model | Write the cumulative logit model, explain it as a latent $Y^* = x^\top\beta + \varepsilon$ with logistic $\varepsilon$ and thresholds $\alpha_k$, interpret $e^{\beta}$ as an odds ratio | Agresti, *Categorical Data Analysis*, ch. on ordinal models (Topic 2 notes)     |
-| Brant test              | It is a **Wald** test comparing separate binary-logit fits at each threshold; know the alternative LR test of partial proportional odds (`ordinal::nominal_test`)                        | Brant (1990), *Biometrics* 46(4)                                                |
 | Wilks' theorem / LRT    | $-2\log\Lambda \to \chi^2_{df}$ under $H_0$; regularity conditions; nested models only                                                                                                   | Casella & Berger, ch. 10                                                        |
 | EM algorithm            | Derive the Q-function, prove monotonicity via Jensen/KL, know local-maximum and slow-convergence issues                                                                                  | McLachlan & Krishnan ch. 1–4; Wasserman, *All of Statistics*                    |
 | Dawid–Skene             | Latent true class + confusion matrices; E- and M-step updates; label switching                                                                                                           | Dawid & Skene (1979), JRSS-C 28(1) 20–28, doi:10.2307/2346806; arXiv:1812.02736 |
@@ -194,7 +192,7 @@ Also store the count matrix `C` (n × 5) as columns `C1..C5`: `C[i, r]` = number
 
 Split at the **patient** level (70/30, seed `20261105`), not the nodule level, so nodules from one patient never appear in both sets. The assignment is the `split` column of `nodules.csv`.
 
-**All model fitting uses the training set only.** The test set is touched once, in Step 8.
+**All model fitting uses the training set only.** The test set is touched once, in Step 7.
 
 ### 3.6 Exploratory analysis
 
@@ -336,39 +334,17 @@ Fit plain Dawid–Skene without covariates (set the structural part to just clas
 
 ---
 
-## Step 6 — Simulation study (Week 5)
+## Step 6 — Diagnostics and hypothesis tests (Week 6)
 
-Script: `codes/r-codes/simulation.R`. This shows your EM implementation is correct, and it is a strong appendix item.
+Scripts: `codes/r-codes/hypo-test.R` (naive models) and `codes/r-codes/hypo-test-em.R` (EM model). Phase 5 of `PLAN.md`.
 
-1. Fix "true" values: $\beta$ and $\alpha$ near your EM estimates, and a realistic $\pi$ (e.g. 0.6 on the diagonal, 0.15 on adjacent cells, the rest small).
-2. Simulate $X$ by resampling rows of the real design matrix, $Z_i$ from the PO model, and 1–4 ratings per nodule from $\pi$ (matching the real distribution of `n_readers`).
-3. Fit the EM model and the naive median-rating model.
-4. Repeat 200 times. Report bias and RMSE of $\hat\beta$ for both methods, and coverage of bootstrap CIs if time allows.
+### 6.1 Proportional odds assumption
 
-Expected finding: the naive model's $\hat\beta$ is attenuated (biased toward 0) because the median rating is a noisy version of $Z$; EM is approximately unbiased. Whether or not that happens, report it.
-
-☐ Simulation table (bias / RMSE, naive vs EM).
-
----
-
-## Step 7 — Diagnostics and hypothesis tests (Week 6)
-
-Script: `codes/r-codes/hypo-test.R`. Phase 5 of `PLAN.md`.
-
-### 7.1 Proportional odds assumption
-
-- **Brant test** (a Wald test) on the naive model:
-
-  ```r
-  library(brant)
-  brant(m_naive)          # omnibus + per-variable chi-square tests
-  ```
-
-- **Likelihood-ratio alternative:** fit with `ordinal::clm` and run `nominal_test(model)`, which compares the PO model with a partial PO model that frees each predictor's coefficient across thresholds.
+- **Likelihood ratio test:** fit with `ordinal::clm` and compare the PO model with a model that frees each coefficient across thresholds, both one predictor at a time (`nominal_test(model)`) and all predictors together (`nominal = ~ ...`).
 - If a variable violates PO, either report it as a limitation or fit a partial PO model for that variable (`clm(..., nominal = ~ x_bad)`).
 - Note: these tests are applied to the naive model; in the EM model PO is assumed for the latent grade.
 
-### 7.2 Likelihood-ratio tests (Wilks)
+### 6.2 Likelihood-ratio tests (Wilks)
 
 For nested models $M_0 \subset M_1$: $\Lambda = -2(\ell_0 - \ell_1) \xrightarrow{d} \chi^2_{df}$, $df$ = difference in number of parameters.
 
@@ -379,15 +355,15 @@ For nested models $M_0 \subset M_1$: $\Lambda = -2(\ell_0 - \ell_1) \xrightarrow
 
 Write a short paragraph linking this to Neyman–Pearson: the LRT is the most powerful test in the simple-vs-simple case, and Wilks gives its asymptotic null distribution in the composite case.
 
-### 7.3 Model fit
+### 6.3 Model fit
 
 - For the EM model, compare against the plain Dawid–Skene model without covariates (LRT: are the features informative about the true grade beyond the readers' ratings?).
 
-☐ Brant/nominal-test table; LRT table.
+☐ Proportional odds test table; LRT table.
 
 ---
 
-## Step 8 — Evaluation on the test set (Week 6)
+## Step 7 — Evaluation on the test set (Week 6)
 
 Touch the test set **once**, after all modelling decisions are frozen.
 
@@ -403,7 +379,7 @@ Touch the test set **once**, after all modelling decisions are frozen.
 
 ---
 
-## Step 9 — Policy interpretation (Week 7)
+## Step 8 — Policy interpretation (Week 7)
 
 Tie the results to the triage recommendation in `PLAN.md`:
 
@@ -420,11 +396,11 @@ Tie the results to the triage recommendation in `PLAN.md`:
 
 ---
 
-## Step 10 — Write the report (Weeks 7–8)
+## Step 9 — Write the report (Weeks 7–8)
 
 `main.tex`. **Max 5 pages, double-spaced, A4.** Appendix does not count.
 
-### 10.1 Preamble
+### 9.1 Preamble
 
 ```latex
 \documentclass[11pt]{article}
@@ -434,28 +410,27 @@ Tie the results to the triage recommendation in `PLAN.md`:
 \usepackage[style=authoryear]{biblatex}\addbibresource{refs.bib}
 ```
 
-### 10.2 Main text (≈ page budget)
+### 9.2 Main text (≈ page budget)
 
 1. **Introduction and research questions** (0.5 p). Example RQs:
    - RQ1: Which geometric nodule features are associated with radiologist-assessed malignancy?
    - RQ2: Does the proportional-odds model adequately describe that relationship?
    - RQ3: Does accounting for inter-reader disagreement (EM) change the estimated effects?
 2. **Data** (0.75 p): LIDC-IDRI, pylidc, unit of analysis, aggregation, train/test split, counts table.
-3. **Methodology** (1.5 p): PO model → EM latent-grade model → Brant/LRT. Equations, not code.
+3. **Methodology** (1.5 p): PO model → EM latent-grade model → LRTs. Equations, not code.
 4. **Results** (1.5 p): one coefficient table (naive vs EM), one key figure (probability curves or $\hat\pi$ heatmap), test results in text.
 5. **Discussion, policy recommendations, limitations** (0.75 p).
 
-### 10.3 Appendix (no page limit)
+### 9.3 Appendix (no page limit)
 
 - A: Full code (use `listings` or `minted`, or `\input` the scripts).
 - B: Full coefficient tables, odds-ratio plot, probability curves for each category.
 - C: EM derivation, monotonicity proof, log-likelihood trace.
-- D: Simulation study.
-- E: Brant and LRT tables; calibration plot.
+- D: LRT tables; calibration plot.
 
-### 10.4 Bibliography (minimum)
+### 9.4 Bibliography (minimum)
 
-Armato et al. (2011, *Medical Physics*) for LIDC-IDRI; Hancock & Magnan (2016) for pylidc; McCullagh (1980) for PO models; Brant (1990); Dempster, Laird & Rubin (1977); Dawid & Skene (1979); Agresti.
+Armato et al. (2011, *Medical Physics*) for LIDC-IDRI; Hancock & Magnan (2016) for pylidc; McCullagh (1980) for PO models; Dempster, Laird & Rubin (1977); Dawid & Skene (1979); Agresti.
 
 Compile, check the page count with the appendix excluded, and ask someone outside the group to read it once.
 
@@ -463,11 +438,11 @@ Compile, check the page count with the appendix excluded, and ask someone outsid
 
 ---
 
-## Step 11 — Slides and defense (Week 8)
+## Step 10 — Slides and defense (Week 8)
 
 `slides/slides.tex` (Beamer). **Fewer than 16 slides, 20–25 minutes, 5–7 minutes per member.**
 
-Suggested 13-slide structure and split (assuming 4 members):
+Suggested 12-slide structure and split (assuming 4 members):
 
 | #   | Slide                                                | Speaker |
 | --- | ---------------------------------------------------- | ------- |
@@ -480,15 +455,14 @@ Suggested 13-slide structure and split (assuming 4 members):
 | 7   | Why EM: latent true grade                            | C       |
 | 8   | E-step / M-step and monotonicity                     | C       |
 | 9   | EM results: $\hat\pi$ heatmap, $\beta$ comparison    | C       |
-| 10  | Simulation study                                     | C       |
-| 11  | Brant test and LRTs                                  | D       |
-| 12  | Test-set performance and triage rule                 | D       |
-| 13  | Limitations and conclusions                          | D       |
+| 10  | Likelihood ratio tests                               | D       |
+| 11  | Test-set performance and triage rule                 | D       |
+| 12  | Limitations and conclusions                          | D       |
 
 Preparation:
 
 - Every member should be able to answer questions on every slide, not only their own.
-- Likely questions: Why not plain logistic regression? Why is Brant a Wald test? Why does EM increase the likelihood? Are readers really conditionally independent? What does $\hat\pi$ mean clinically? Why is malignancy not ground truth?
+- Likely questions: Why not plain logistic regression? Why does EM increase the likelihood? Are readers really conditionally independent? What does $\hat\pi$ mean clinically? Why is malignancy not ground truth?
 - Do two full timed rehearsals.
 
 ☐ `slides.pdf`; two rehearsals done.
@@ -503,9 +477,9 @@ Preparation:
 | 2    | 3          | Nodule-level train/test tables; EDA                             |
 | 3    | 4          | Naive PO model fitted                                           |
 | 4    | 5.1–5.3    | EM derivation written; EM code converging                       |
-| 5    | 5.4–5.6, 6 | Bootstrap SEs; simulation study                                 |
-| 6    | 7, 8       | Diagnostics, LRTs, test-set evaluation                          |
-| 7    | 9, 10      | Policy section; report draft                                    |
-| 8    | 10, 11     | Report final; slides; rehearsals                                |
+| 5    | 5.4–5.6    | Bootstrap SEs                                                   |
+| 6    | 6, 7       | Diagnostics, LRTs, test-set evaluation                          |
+| 7    | 8, 9       | Policy section; report draft                                    |
+| 8    | 9, 10      | Report final; slides; rehearsals                                |
 
-**Fallback if time runs short:** the EM model (Steps 5–6) is the extension. Steps 2–4 and 7–11 alone form a complete project that matches the original plan. Get those working first; do not let EM debugging block the rest.
+**Fallback if time runs short:** the EM model (Step 5) is the extension. Steps 2–4 and 6–10 alone form a complete project that matches the original plan. Get those working first; do not let EM debugging block the rest.
