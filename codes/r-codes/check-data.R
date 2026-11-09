@@ -8,6 +8,7 @@ raw <- read.csv("data/raw/annotations.csv", stringsAsFactors = FALSE)
 nod <- read.csv("data/processed/nodules.csv", stringsAsFactors = FALSE)
 trn <- read.csv("data/processed/nodules_train.csv", stringsAsFactors = FALSE)
 tst <- read.csv("data/processed/nodules_test.csv", stringsAsFactors = FALSE)
+trm <- read.csv("data/processed/nodules_train_trimmed.csv", stringsAsFactors = FALSE)
 
 n_fail <- 0
 check <- function(ok, msg) {
@@ -100,6 +101,25 @@ check(all(c("calcification", "internalStructure") %in% names(nod)),
       "nominal ratings kept in master table")
 frac <- length(unique(trn$patient_id)) / length(unique(nod$patient_id))
 check(abs(frac - 0.7) < 0.01, sprintf("70%% of patients in train (got %.3f)", frac))
+
+# ---- Trimmed training table -------------------------------------------------
+cat("\n== data/processed/nodules_train_trimmed.csv\n")
+R_t <- as.matrix(trm[paste0("R", 1:4)])
+C_t <- as.matrix(trm[paste0("C", 1:5)])
+check(identical(trm$nodule_id, trn$nodule_id), "same nodules as the training table")
+check(all(abs(sweep(R_t, 1, trm$mal_median_raw)) < 2, na.rm = TRUE),
+      "no rating at least 2 grades from the median")
+check(all(t(apply(R_t, 1, function(r) tabulate(r[!is.na(r)], 5))) == C_t),
+      "counts match the remaining ratings")
+no_ratings <- trm$nodule_id[rowSums(C_t) == 0]
+check(identical(no_ratings, "997_0"), "only nodule 997_0 loses all its ratings")
+warn(sprintf("%s keeps no ratings (5, 1, 1, 5): it stays in the EM fit through its features only",
+             paste(no_ratings, collapse = ", ")))
+check(all(rowSums(C_t) + trm$n_ratings_removed == trn$n_readers),
+      "remaining + removed ratings = readers")
+check(identical(trm$mal_median, trn$mal_median), "mal_median unchanged")
+check(all(R_t == as.matrix(trn[paste0("R", 1:4)]), na.rm = TRUE),
+      "remaining ratings match the training table")
 
 cat(sprintf("\n%d check(s) failed\n", n_fail))
 quit(status = as.integer(n_fail > 0))

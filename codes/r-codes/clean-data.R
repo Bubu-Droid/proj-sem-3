@@ -4,6 +4,7 @@
 #   nodules.csv        master table, one row per nodule, all columns + split
 #   nodules_train.csv  modelling table, training patients
 #   nodules_test.csv   modelling table, test patients
+#   nodules_train_trimmed.csv  training table without outlying ratings (EM model)
 #   median_ties.csv    nodules whose median malignancy fell between two grades
 #
 # Run from the repository root:
@@ -80,6 +81,24 @@ write.csv(nod[nod$split == "train", model_cols],
           "data/processed/nodules_train.csv", row.names = FALSE)
 write.csv(nod[nod$split == "test", model_cols],
           "data/processed/nodules_test.csv", row.names = FALSE)
+
+# ---- Trimmed training table for the EM model --------------------------------
+# Removes ratings at least 2 grades from the nodule's unrounded median. The
+# median columns keep their values from all ratings.
+trim <- nod[nod$split == "train", model_cols]
+R_cols <- paste0("R", 1:4)
+C_cols <- paste0("C", 1:K)
+total <- rowSums(trim[C_cols])
+R <- as.matrix(trim[R_cols])
+R[abs(sweep(R, 1, trim$mal_median_raw)) >= 2] <- NA
+trim[R_cols] <- R
+trim[C_cols] <- t(apply(R, 1, function(r) tabulate(r[!is.na(r)], K)))
+trim$n_ratings_removed <- total - rowSums(trim[C_cols])
+write.csv(trim, "data/processed/nodules_train_trimmed.csv", row.names = FALSE)
+cat(sprintf("trimmed: %d of %d training ratings removed (%.1f%%), %d nodules affected\n",
+            sum(trim$n_ratings_removed), sum(total),
+            100 * sum(trim$n_ratings_removed) / sum(total),
+            sum(trim$n_ratings_removed > 0)))
 
 ties <- nod[nod$mal_median_tie,
             c("nodule_id", "patient_id", "n_readers", paste0("R", 1:4),
