@@ -107,8 +107,8 @@ cat("\n== data/processed/nodules_train_trimmed.csv\n")
 R_t <- as.matrix(trm[paste0("R", 1:4)])
 C_t <- as.matrix(trm[paste0("C", 1:5)])
 check(identical(trm$nodule_id, trn$nodule_id), "same nodules as the training table")
-check(all(abs(sweep(R_t, 1, trm$mal_median_raw)) < 2, na.rm = TRUE),
-      "no rating at least 2 grades from the median")
+check(all(abs(sweep(R_t, 1, trn$mal_median_raw)) < 2, na.rm = TRUE),
+      "no rating at least 2 grades from the original median")
 check(all(t(apply(R_t, 1, function(r) tabulate(r[!is.na(r)], 5))) == C_t),
       "counts match the remaining ratings")
 no_ratings <- trm$nodule_id[rowSums(C_t) == 0]
@@ -117,7 +117,10 @@ warn(sprintf("%s keeps no ratings (5, 1, 1, 5): it stays in the EM fit through i
              paste(no_ratings, collapse = ", ")))
 check(all(rowSums(C_t) + trm$n_ratings_removed == trn$n_readers),
       "remaining + removed ratings = readers")
-check(identical(trm$mal_median, trn$mal_median), "mal_median unchanged")
+med_t <- apply(R_t, 1, function(r) if (all(is.na(r))) NA_real_ else median(r, na.rm = TRUE))
+check(isTRUE(all.equal(trm$mal_median_raw, med_t)), "mal_median_raw is the median of the kept ratings")
+check(isTRUE(all.equal(trm$mal_median, ceiling(med_t))), "mal_median rounds it up")
+check(identical(trm$nodule_id[is.na(trm$mal_median)], "997_0"), "only 997_0 has no median")
 check(all(R_t == as.matrix(trn[paste0("R", 1:4)]), na.rm = TRUE),
       "remaining ratings match the training table")
 
