@@ -11,7 +11,7 @@ __pycache__/
 # Tooling caches
 .rumdl_cache/
 
-# LaTeX build artefacts
+# LaTeX build artifacts
 *.aux
 *.log
 *.out
