@@ -15,7 +15,7 @@ Conventions used below:
 ### 0.1 Folder layout
 
 ```text
-proj-sem-3/
+lung-cancer-logistic-reg-sem-3/
 ├── PLAN.md
 ├── STEPS.md
 ├── data/
