@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Statistics course project: proportional-odds and EM (Dawid–Skene) modelling of
+Statistics course project: proportional-odds and EM (Dawid–Skene) modeling of
 LIDC-IDRI lung-nodule malignancy ratings. `PLAN.md` is the brief, `STEPS.md`
 the step-by-step walkthrough (`STEPS.html` is generated from it).
 
@@ -75,9 +75,9 @@ details in `statproj.sty`.
 - `reader_slot` / `R1..R4` order is arbitrary: LIDC reader identities are not
   consistent across scans.
 - `calcification` and `internalStructure` are nominal and excluded from
-  modelling; they stay in `annotations.csv` and `nodules.csv` only.
+  modeling; they stay in `annotations.csv` and `nodules.csv` only.
 - `mal_median` rounds half-grade medians **up**; `mal_median_tie` flags them.
-- Processed CSVs hold unstandardised values; standardise in the modelling
+- Processed CSVs hold unstandardized values; standardize in the modeling
   script using training-set means/SDs.
 
 ## Git

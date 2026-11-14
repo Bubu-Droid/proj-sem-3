@@ -1,4 +1,4 @@
-# Ordinal and Latent-Grade Modelling of Radiologist-Assessed Lung Nodule Malignancy
+# Ordinal and Latent-Grade Modeling of Radiologist-Assessed Lung Nodule Malignancy
 
 This was the project topic for my third semester statistics project.
 
