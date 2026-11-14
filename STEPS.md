@@ -1,4 +1,4 @@
-# Project Walkthrough: Ordinal Modelling of LIDC-IDRI Nodule Malignancy
+# Project Walkthrough: Ordinal Modeling of LIDC-IDRI Nodule Malignancy
 
 A step-by-step guide from an empty folder to the final defense. Read alongside `PLAN.md`, which states *what* the project is. This file says *how* to do it and in what order.
 
@@ -81,7 +81,7 @@ install.packages(c("ordinal", "ggplot2", "corrplot", "xtable"))
 
 ## Step 1 — Background reading (Week 1, in parallel with Step 2)
 
-Do this before writing any modelling code. Each item maps to a part of the report.
+Do this before writing any modeling code. Each item maps to a part of the report.
 
 | Topic                   | What you must be able to do                                                                                                                                                              | Source                                                                          |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -140,7 +140,7 @@ Without the DICOM images you **cannot** compute intensity-based radiomic texture
 1. contour-derived geometry (≈ 10–15 features from 2.2), and
 2. the radiologists' semantic ratings (8 features).
 
-That is not "dozens of texture features". State this honestly in the report. (Optional extension: download the DICOMs for a subset and run `pyradiomics`. Skip unless you have spare time.)
+That is not "dozens of texture features." State this honestly in the report. (Optional extension: download the DICOMs for a subset and run `pyradiomics`. Skip unless you have spare time.)
 
 ☐ `data/raw/annotations.csv` exists; a short table of counts for the report's Data section.
 
@@ -157,7 +157,7 @@ Base R only. Writes to `data/processed/`:
 | File | Contents |
 |---|---|
 | `nodules.csv` | Master nodule table: every column below plus `calcification`, `internalStructure` and `split` |
-| `nodules_train.csv`, `nodules_test.csv` | Modelling tables (no nominal ratings, no `split`) |
+| `nodules_train.csv`, `nodules_test.csv` | Modeling tables (no nominal ratings, no `split`) |
 | `nodules_train_trimmed.csv` | Training table without outlying ratings, used by all training models |
 | `median_ties.csv` | Nodules whose median malignancy fell between two grades |
 
@@ -168,11 +168,11 @@ The semantic ratings (spiculation, margin, …) come from the **same radiologist
 - **Primary model:** contour-derived geometric features only.
 - **Secondary model:** geometric + semantic features (reported as a comparison, with the circularity caveat).
 
-`calcification` and `internalStructure` are **nominal** (category labels, not rankings), and almost every nodule has the same value (no calcification, soft tissue). They are **dropped from modelling**; their per-nodule mode is kept in `nodules.csv` for reference.
+`calcification` and `internalStructure` are **nominal** (category labels, not rankings), and almost every nodule has the same value (no calcification, soft tissue). They are **dropped from modeling**; their per-nodule mode is kept in `nodules.csv` for reference.
 
 ### 3.2 Clusters with more than 4 annotations
 
-LIDC had four readers per scan, so a cluster of 5+ annotations means `cluster_annotations()` merged neighbouring lesions. These clusters are dropped; report how many.
+LIDC had four readers per scan, so a cluster of 5+ annotations means `cluster_annotations()` merged neighboring lesions. These clusters are dropped; report how many.
 
 ### 3.3 Aggregate to one row per nodule
 
@@ -184,13 +184,13 @@ For each `nodule_id`:
 
 Also store the count matrix `C` (n × 5) as columns `C1..C5`: `C[i, r]` = number of readers who gave nodule *i* rating *r*. The EM code uses this.
 
-**Median ties.** With an even number of readers (2 or 4) the median falls between two grades whenever the two middle ratings differ, e.g. (3, 4) → 3.5 or (2, 3, 4, 4) → 3.5. `mal_median` rounds these **up** (conservative for triage), `mal_median_raw` keeps the unrounded value and `mal_median_tie` flags them. State the rule in the report. The EM model does not need this rule, since it uses all ratings.
+**Median ties.** With an even number of readers (2 or 4) the median falls between two grades whenever the two middle ratings differ, e.g., (3, 4) → 3.5 or (2, 3, 4, 4) → 3.5. `mal_median` rounds these **up** (conservative for triage), `mal_median_raw` keeps the unrounded value and `mal_median_tie` flags them. State the rule in the report. The EM model does not need this rule, since it uses all ratings.
 
 ### 3.4 Transformations
 
 - `volume`, `surface_area`, `convex_volume` are heavily right-skewed: `log_volume`, `log_surface_area`, `log_convex_volume` are added.
 - Derived: `compactness = volume^(2/3) / surface_area`. (`solidity` already comes from extraction.)
-- The CSVs store **unstandardised** values. Standardise (mean 0, sd 1) inside each modelling script using the **training-set** means/SDs, so test-set information never leaks into the saved files.
+- The CSVs store **unstandardized** values. Standardize (mean 0, sd 1) inside each modeling script using the **training-set** means/SDs, so test-set information never leaks into the saved files.
 
 ### 3.5 Train/test split by patient
 
@@ -261,8 +261,8 @@ Fit on `data/processed/nodules_train_trimmed.csv`, which drops training ratings 
 
 1. Complete-data log-likelihood: $\ell_c = \sum_i \sum_k \mathbb{1}\{Z_i=k\}\left[\log p_{ik} + \sum_r C_{ir}\log\pi_{kr}\right]$.
 2. Q-function: replace $\mathbb{1}\{Z_i=k\}$ by $w_{ik} = P(Z_i = k \mid R_i, x_i; \theta^{(t)})$.
-3. Q separates into a $\pi$ part (closed-form maximiser) and an $(\alpha,\beta)$ part (a weighted ordinal likelihood).
-4. Monotonicity proof: $\ell(\theta) = Q(\theta\mid\theta^{(t)}) - H(\theta\mid\theta^{(t)})$, and $H$ is maximised at $\theta^{(t)}$ by Jensen / Gibbs' inequality.
+3. Q separates into a $\pi$ part (closed-form maximizer) and an $(\alpha,\beta)$ part (a weighted ordinal likelihood).
+4. Monotonicity proof: $\ell(\theta) = Q(\theta\mid\theta^{(t)}) - H(\theta\mid\theta^{(t)})$, and $H$ is maximized at $\theta^{(t)}$ by Jensen / Gibbs' inequality.
 
 ### 5.3 Implementation
 
@@ -307,7 +307,7 @@ em_dawid_skene_polr <- function(X, C, K = 5, w_init, max_iter = 500, tol = 1e-8)
 
 Notes:
 
-- **Initialisation:** `w_init[i, k] = 1` if `k == mal_median[i]` (optionally smoothed, e.g. 0.8 on the median and 0.05 elsewhere). Also run 10–20 random Dirichlet initialisations and keep the fit with the largest log-likelihood.
+- **Initialization:** `w_init[i, k] = 1` if `k == mal_median[i]` (optionally smoothed, e.g., 0.8 on the median and 0.05 elsewhere). Also run 10–20 random Dirichlet initializations and keep the fit with the largest log-likelihood.
 - **Check the trace is non-decreasing.** A decrease means a bug (usually in the E-step or in how weights are passed to `polr`).
 - **Label switching:** after fitting, check that $\hat\pi$ is diagonally dominant ($\hat\pi_{kk}$ is the largest entry in row $k$). If not, the run converged to a permuted solution; discard it.
 - **If $\hat\pi$ is unstable** (rows for rare categories estimated from very few nodules): constrain it to be banded ($\pi_{kr} = 0$ for $|k - r| > 2$) or use the one-coin model ($\pi_{kk} = p$, off-diagonals equal).
@@ -318,7 +318,7 @@ Notes:
 Parametric or nonparametric bootstrap at the **patient** level:
 
 1. Resample patients with replacement (B = 200 is enough for a course project).
-2. Re-run EM, initialised at the full-data MLE (fast convergence).
+2. Re-run EM, initialized at the full-data MLE (fast convergence).
 3. Report bootstrap SEs and percentile CIs for $\beta$ and the diagonal of $\pi$.
 
 (Louis' identity is the analytical alternative; mention it in the theory section even if you use the bootstrap.)
@@ -332,7 +332,7 @@ Fit plain Dawid–Skene without covariates (set the structural part to just clas
 - Table: $\hat\beta$ (naive, Step 4) vs. $\hat\beta$ (EM), with SEs.
 - Heatmap of $\hat\pi$ (rows = true grade, columns = reported rating).
 - Log-likelihood trace plot.
-- Distribution of posterior entropy of $w_i$: which nodules are "ambiguous".
+- Distribution of posterior entropy of $w_i$: which nodules are "ambiguous."
 
 ☐ Converged EM fit; four outputs above.
 
@@ -369,9 +369,9 @@ Write a short paragraph linking this to Neyman–Pearson: the LRT is the most po
 
 ## Step 7 — Evaluation on the test set (Week 6)
 
-Touch the test set **once**, after all modelling decisions are frozen.
+Touch the test set **once**, after all modeling decisions are frozen.
 
-1. Apply the training-set standardisation to the test predictors. The test set keeps all ratings.
+1. Apply the training-set standardization to the test predictors. The test set keeps all ratings.
 2. For each model (naive primary, naive secondary, EM), turn its predicted probabilities into a predicted grade, the most likely one, and compare it with `mal_median`. EM's latent grades do not match the rating scale exactly, so first convert them with $P(R = r \mid x) = \sum_k P(Z = k \mid x)\,\pi_{kr}$.
 3. Compute three errors:
    - misclassification rate: the share of nodules whose predicted grade is wrong;
@@ -390,7 +390,7 @@ Script: `codes/r-codes/test-eval.R`.
 
 Tie the results to the triage recommendation in `PLAN.md`:
 
-- Propose a rule such as: flag a nodule for priority review if $P(Z \ge 4 \mid x) > \tau$. Choose $\tau$ on the training set (e.g. sensitivity ≥ 0.9), then report the sensitivity and workload (fraction flagged) on the test set.
+- Propose a rule such as: flag a nodule for priority review if $P(Z \ge 4 \mid x) > \tau$. Choose $\tau$ on the training set (e.g., sensitivity ≥ 0.9), then report the sensitivity and workload (fraction flagged) on the test set.
 - Do not use $\hat\pi$ to make claims about reader reliability, because the EM fit removes outlying ratings (Step 5.1).
 
 **Limitations you must state:**
@@ -399,7 +399,7 @@ Tie the results to the triage recommendation in `PLAN.md`:
 2. No intensity-based radiomics (no DICOM).
 3. Circularity of semantic features.
 4. Conditional-independence assumption of readers in the EM model.
-5. LIDC is a research dataset from a few US centres; generalisation to a public-health setting such as Indian hospitals is untested.
+5. LIDC is a research dataset from a few US centers; generalization to a public-health setting such as Indian hospitals is untested.
 
 ---
 

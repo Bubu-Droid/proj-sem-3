@@ -245,9 +245,9 @@
 <nav id="TOC" role="doc-toc">
 <ul>
 <li><a
-href="#project-walkthrough-ordinal-modelling-of-lidc-idri-nodule-malignancy"
-id="toc-project-walkthrough-ordinal-modelling-of-lidc-idri-nodule-malignancy">Project
-Walkthrough: Ordinal Modelling of LIDC-IDRI Nodule Malignancy</a>
+href="#project-walkthrough-ordinal-modeling-of-lidc-idri-nodule-malignancy"
+id="toc-project-walkthrough-ordinal-modeling-of-lidc-idri-nodule-malignancy">Project
+Walkthrough: Ordinal Modeling of LIDC-IDRI Nodule Malignancy</a>
 <ul>
 <li><a href="#step-0--set-up-the-project-day-1"
 id="toc-step-0--set-up-the-project-day-1">Step 0 — Set up the project
@@ -291,8 +291,8 @@ timeline (8 weeks; compress if your deadline is sooner)</a></li>
 </ul>
 </nav>
 <h1
-id="project-walkthrough-ordinal-modelling-of-lidc-idri-nodule-malignancy">Project
-Walkthrough: Ordinal Modelling of LIDC-IDRI Nodule Malignancy</h1>
+id="project-walkthrough-ordinal-modeling-of-lidc-idri-nodule-malignancy">Project
+Walkthrough: Ordinal Modeling of LIDC-IDRI Nodule Malignancy</h1>
 <p>A step-by-step guide from an empty folder to the final defense. Read
 alongside <code>PLAN.md</code>, which states <em>what</em> the project
 is. This file says <em>how</em> to do it and in what order.</p>
@@ -371,8 +371,8 @@ packages load.</p>
 <hr />
 <h2 id="step-1--background-reading-week-1-in-parallel-with-step-2">Step
 1 — Background reading (Week 1, in parallel with Step 2)</h2>
-<p>Do this before writing any modelling code. Each item maps to a part
-of the report.</p>
+<p>Do this before writing any modeling code. Each item maps to a part of
+the report.</p>
 <table>
 <thead>
 <tr>
@@ -520,7 +520,7 @@ feature pool is:</p>
 <li>contour-derived geometry (≈ 10–15 features from 2.2), and</li>
 <li>the radiologists' semantic ratings (8 features).</li>
 </ol>
-<p>That is not "dozens of texture features". State this honestly in the
+<p>That is not "dozens of texture features." State this honestly in the
 report. (Optional extension: download the DICOMs for a subset and run
 <code>pyradiomics</code>. Skip unless you have spare time.)</p>
 <p>☐ <code>data/raw/annotations.csv</code> exists; a short table of
@@ -548,7 +548,7 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="
 </tr>
 <tr>
 <td><code>nodules_train.csv</code>, <code>nodules_test.csv</code></td>
-<td>Modelling tables (no nominal ratings, no <code>split</code>)</td>
+<td>Modeling tables (no nominal ratings, no <code>split</code>)</td>
 </tr>
 <tr>
 <td><code>nodules_train_trimmed.csv</code></td>
@@ -575,12 +575,12 @@ only.</li>
 <p><code>calcification</code> and <code>internalStructure</code> are
 <strong>nominal</strong> (category labels, not rankings), and almost
 every nodule has the same value (no calcification, soft tissue). They
-are <strong>dropped from modelling</strong>; their per-nodule mode is
+are <strong>dropped from modeling</strong>; their per-nodule mode is
 kept in <code>nodules.csv</code> for reference.</p>
 <h3 id="32-clusters-with-more-than-4-annotations">3.2 Clusters with more
 than 4 annotations</h3>
 <p>LIDC had four readers per scan, so a cluster of 5+ annotations means
-<code>cluster_annotations()</code> merged neighbouring lesions. These
+<code>cluster_annotations()</code> merged neighboring lesions. These
 clusters are dropped; report how many.</p>
 <h3 id="33-aggregate-to-one-row-per-nodule">3.3 Aggregate to one row per
 nodule</h3>
@@ -600,9 +600,9 @@ EM model, plus <code>mal_median</code> for the naive models.</li>
 nodule <em>i</em> rating <em>r</em>. The EM code uses this.</p>
 <p><strong>Median ties.</strong> With an even number of readers (2 or 4)
 the median falls between two grades whenever the two middle ratings
-differ, e.g. (3, 4) → 3.5 or (2, 3, 4, 4) → 3.5. <code>mal_median</code>
-rounds these <strong>up</strong> (conservative for triage),
-<code>mal_median_raw</code> keeps the unrounded value and
+differ, e.g., (3, 4) → 3.5 or (2, 3, 4, 4) → 3.5.
+<code>mal_median</code> rounds these <strong>up</strong> (conservative
+for triage), <code>mal_median_raw</code> keeps the unrounded value and
 <code>mal_median_tie</code> flags them. State the rule in the report.
 The EM model does not need this rule, since it uses all ratings.</p>
 <h3 id="34-transformations">3.4 Transformations</h3>
@@ -613,8 +613,8 @@ The EM model does not need this rule, since it uses all ratings.</p>
 <code>log_convex_volume</code> are added.</li>
 <li>Derived: <code>compactness = volume^(2/3) / surface_area</code>.
 (<code>solidity</code> already comes from extraction.)</li>
-<li>The CSVs store <strong>unstandardised</strong> values. Standardise
-(mean 0, sd 1) inside each modelling script using the
+<li>The CSVs store <strong>unstandardized</strong> values. Standardize
+(mean 0, sd 1) inside each modeling script using the
 <strong>training-set</strong> means/SDs, so test-set information never
 leaks into the saved files.</li>
 </ul>
@@ -717,12 +717,12 @@ class="math inline">\(\mathbb{1}\{Z_i=k\}\)</span> by <span
 class="math inline">\(w_{ik} = P(Z_i = k \mid R_i, x_i;
 \theta^{(t)})\)</span>.</li>
 <li>Q separates into a <span class="math inline">\(\pi\)</span> part
-(closed-form maximiser) and an <span
+(closed-form maximizer) and an <span
 class="math inline">\((\alpha,\beta)\)</span> part (a weighted ordinal
 likelihood).</li>
 <li>Monotonicity proof: <span class="math inline">\(\ell(\theta) =
 Q(\theta\mid\theta^{(t)}) - H(\theta\mid\theta^{(t)})\)</span>, and
-<span class="math inline">\(H\)</span> is maximised at <span
+<span class="math inline">\(H\)</span> is maximized at <span
 class="math inline">\(\theta^{(t)}\)</span> by Jensen / Gibbs'
 inequality.</li>
 </ol>
@@ -765,10 +765,10 @@ inequality.</li>
 <span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Notes:</p>
 <ul>
-<li><strong>Initialisation:</strong> <code>w_init[i, k] = 1</code> if
-<code>k == mal_median[i]</code> (optionally smoothed, e.g. 0.8 on the
+<li><strong>Initialization:</strong> <code>w_init[i, k] = 1</code> if
+<code>k == mal_median[i]</code> (optionally smoothed, e.g., 0.8 on the
 median and 0.05 elsewhere). Also run 10–20 random Dirichlet
-initialisations and keep the fit with the largest log-likelihood.</li>
+initializations and keep the fit with the largest log-likelihood.</li>
 <li><strong>Check the trace is non-decreasing.</strong> A decrease means
 a bug (usually in the E-step or in how weights are passed to
 <code>polr</code>).</li>
@@ -794,7 +794,7 @@ level:</p>
 <ol type="1">
 <li>Resample patients with replacement (B = 200 is enough for a course
 project).</li>
-<li>Re-run EM, initialised at the full-data MLE (fast convergence).</li>
+<li>Re-run EM, initialized at the full-data MLE (fast convergence).</li>
 <li>Report bootstrap SEs and percentile CIs for <span
 class="math inline">\(\beta\)</span> and the diagonal of <span
 class="math inline">\(\pi\)</span>.</li>
@@ -816,7 +816,7 @@ SEs.</li>
 grade, columns = reported rating).</li>
 <li>Log-likelihood trace plot.</li>
 <li>Distribution of posterior entropy of <span
-class="math inline">\(w_i\)</span>: which nodules are "ambiguous".</li>
+class="math inline">\(w_i\)</span>: which nodules are "ambiguous."</li>
 </ul>
 <p>☐ Converged EM fit; four outputs above.</p>
 <hr />
@@ -871,10 +871,10 @@ grade beyond the readers' ratings?).</li>
 <hr />
 <h2 id="step-7--evaluation-on-the-test-set-week-6">Step 7 — Evaluation
 on the test set (Week 6)</h2>
-<p>Touch the test set <strong>once</strong>, after all modelling
+<p>Touch the test set <strong>once</strong>, after all modeling
 decisions are frozen.</p>
 <ol type="1">
-<li>Apply the training-set standardisation to the test predictors. The
+<li>Apply the training-set standardization to the test predictors. The
 test set keeps all ratings.</li>
 <li>For each model (naive primary, naive secondary, EM), turn its
 predicted probabilities into a predicted grade, the most likely one, and
@@ -905,7 +905,7 @@ interpretation (Week 7)</h2>
 <ul>
 <li>Propose a rule such as: flag a nodule for priority review if <span
 class="math inline">\(P(Z \ge 4 \mid x) &gt; \tau\)</span>. Choose <span
-class="math inline">\(\tau\)</span> on the training set (e.g.
+class="math inline">\(\tau\)</span> on the training set (e.g.,
 sensitivity ≥ 0.9), then report the sensitivity and workload (fraction
 flagged) on the test set.</li>
 <li>Do not use <span class="math inline">\(\hat\pi\)</span> to make
@@ -921,7 +921,7 @@ patients; mention it as possible external validation.)</li>
 <li>No intensity-based radiomics (no DICOM).</li>
 <li>Circularity of semantic features.</li>
 <li>Conditional-independence assumption of readers in the EM model.</li>
-<li>LIDC is a research dataset from a few US centres; generalisation to
+<li>LIDC is a research dataset from a few US centers; generalization to
 a public-health setting such as Indian hospitals is untested.</li>
 </ol>
 <hr />
