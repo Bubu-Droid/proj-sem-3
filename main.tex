@@ -5,7 +5,7 @@
 \definecolor{myorange}{HTML}{dd8452}
 \definecolor{mygreen}{HTML}{55a868}
 
-\title{Ordinal and Latent-Grade Modelling of Radiologist-Assessed
+\title{Ordinal and Latent-Grade Modeling of Radiologist-Assessed
 Lung Nodule Malignancy}
 \author{Avigyan Chakraborty}
 \rollno{BS2516}
@@ -41,9 +41,9 @@ Lung Nodule Malignancy}
 Lung nodules are often found on chest CT scans, and most are benign. Radiologists
 must decide which ones need attention, and their time is limited, particularly in
 public health systems. A statistical model of how nodule characteristics relate to
-suspected malignancy could help to prioritise this review.
+suspected malignancy could help to prioritize this review.
 
-Modelling this is not straightforward because radiologists often disagree. In the
+Modeling this is not straightforward because radiologists often disagree. In the
 LIDC-IDRI database, up to four radiologists rate each nodule's malignancy on an
 ordered scale from $1$ to $5$, and on about $78\%$ of the multi-reader nodules in
 our training set they do not all give the same rating. The usual approach of
@@ -58,12 +58,12 @@ address the following research questions.
     ratings?
     \ii Does the proportional odds model adequately describe that relationship?
     \ii How much do radiologists' semantic ratings add beyond geometric features?
-    \ii Does modelling a latent true grade change the estimated effects or the
+    \ii Does modeling a latent true grade change the estimated effects or the
     predictions?
     \ii Could such a model support the triage of nodules for review?
 \end{enumerate}
 
-The rest of the report is organised as follows. Section $2$ describes the data, and
+The rest of the report is organized as follows. Section $2$ describes the data, and
 Section $3$ specifies and fits the models. Section $4$ presents the hypothesis tests,
 including the test of the proportional odds assumption. Section $5$ evaluates the
 models on held-out patients, and Section $6$ interprets the results as a triage
@@ -80,7 +80,7 @@ appearance and its likely malignancy.
 
 The unit of analysis is the \emph{nodule}. Geometric features are
 averaged across a nodule's readers and semantic ratings are
-summarised by their median. We use the median because the ratings
+summarized by their median. We use the median because the ratings
 are ordinal, so the gaps between grades have no fixed numerical
 meaning, and because it is less sensitive to a single outlying
 reader than the mean.
@@ -150,7 +150,7 @@ in a single plane.
 \subsection{Summary Statistics}
 
 All summary statistics are computed on the training set.
-\Cref{table:summary_all} gives the unstandardised values of the
+\Cref{table:summary_all} gives the unstandardized values of the
 predictors, and \cref{table:summary_grades} breaks them down by
 median malignancy grade.
 
@@ -230,7 +230,7 @@ median malignancy grade.
       \hline
   \end{tabular}}
   \caption{Mean (Std. Dev.) by Median Malignancy Grade
-  (number of training nodules in brackets)}
+  (number of training nodules in parentheses)}
   \label{table:summary_grades}
 \end{table}
 
@@ -298,7 +298,7 @@ we model its cumulative probabilities with a proportional odds model
   = \alpha_k - x_i\trans\beta, \qquad k = 1, \dots, 4,
 \]
 where $\alpha_1 < \dots < \alpha_4$ are thresholds. A positive
-$\beta_j$ means that a larger $x_{ij}$ shifts a nodule towards higher
+$\beta_j$ means that a larger $x_{ij}$ shifts a nodule toward higher
 grades. The odds of being above any given grade are multiplied by
 $e^{\beta_j}$ for each one-unit increase in $x_{ij}$, and this factor
 is assumed to be the same at every threshold. The model is
@@ -315,8 +315,8 @@ treating nodules as independent, the likelihood is
   - F(\alpha_{k-1} - x_i\trans\beta) \bigr]^{\mathbf{1}\{Y_i = k\}}.
 \]
 
-The models are fitted by maximising $L$ on the training set with
-\texttt{polr}. All predictors are standardised, so one unit is
+The models are fitted by maximizing $L$ on the training set with
+\texttt{polr}. All predictors are standardized, so one unit is
 one standard deviation. Confidence intervals for the odds
 ratios are profile-likelihood intervals, obtained by inverting the
 likelihood ratio test of $H_0 \colon \beta_j = b$ using the
@@ -345,7 +345,7 @@ The fitted model is
     - 0.327\cdot\texttt{solidity} \\
   &+ 0.048\cdot\texttt{compactness}\bigr),
 \end{align*}
-with $\hat{\alpha} = (-2.456, -1.068, 1.602, 3.291)$ and maximised
+with $\hat{\alpha} = (-2.456, -1.068, 1.602, 3.291)$ and maximized
 log-likelihood $-2193.908$. The estimates are given in
 \cref{table:polr_primary}.
 
@@ -422,7 +422,7 @@ reader's view of overall shape. Adding these ratings gives
     &+ 0.067\cdot\texttt{texture}
   + 0.014\cdot\texttt{sphericity}\bigr),
 \end{align*}
-with $\hat{\alpha} = (-2.518, -1.098, 1.661, 3.404)$ and maximised
+with $\hat{\alpha} = (-2.518, -1.098, 1.661, 3.404)$ and maximized
 log-likelihood $-2150.257$. The estimates are given in
 \cref{table:polr_secondary}.
 
@@ -460,7 +460,7 @@ log-likelihood $-2150.257$. The estimates are given in
     for lobulation, texture and sphericity contain $1$.
     \ii \textbf{Geometric Features:} Size remains the largest effect
     (odds ratio $3.26$), and elongation barely changes ($1.38$). The
-    solidity effect moves towards $1$ ($0.85$), and the interval for
+    solidity effect moves toward $1$ ($0.85$), and the interval for
     flatness now contains $1$, which suggests that the ratings capture
     some of the same information about shape.
     \ii \textbf{Circularity:} The semantic ratings come from the same
@@ -509,7 +509,7 @@ nodule $i$ the rating $r$. The ratings are the observed
   \ell(\Psi) = \sum_{i=1}^{n} \log \sum_{k=1}^{5}
   p_{ik}(\alpha, \beta) \prod_{r=1}^{5} \pi_{kr}^{C_{ir}}.
 \]
-The sum inside the logarithm makes this hard to maximise directly. If
+The sum inside the logarithm makes this hard to maximize directly. If
 $Z_i$ were observed, the \emph{complete} log-likelihood would separate
 into simpler terms:
 \[
@@ -545,7 +545,7 @@ $t = 0, 1, 2, \dots$ does the following.
     \ii \textbf{M-step:} Set
     $\Psi^{(t+1)} = \operatorname{argmax}_{\Psi} Q(\Psi \mid \Psi^{(t)})$.
     The two terms of $Q$ involve different parameters, so they are
-    maximised separately:
+    maximized separately:
     \begin{itemize}
         \ii The update for $\pi$ has a closed form, found using a
         Lagrange multiplier for the constraint $\sum_r \pi_{kr} = 1$:
@@ -660,7 +660,7 @@ every iteration, as expected for EM.
 To formally evaluate our models, we conduct a series of hypothesis tests
 at the $\alpha = 0.05$ level, all on the training set. All of them are
 likelihood ratio tests. For a full model $M_1$ and a restricted model
-$M_0 \subset M_1$, with maximised log-likelihoods $\hat{\ell}_1$ and
+$M_0 \subset M_1$, with maximized log-likelihoods $\hat{\ell}_1$ and
 $\hat{\ell}_0$, the test statistic is
 \[
   \Lambda = 2\bigl(\hat{\ell}_1 - \hat{\ell}_0\bigr).
@@ -685,7 +685,7 @@ Setting a coefficient to zero is the same as removing that predictor, and
 all the remaining parameters are re-estimated in the restricted fit.
 
 For the naive models, the equations $\nabla \ell(\alpha, \beta) = 0$ have
-no closed-form solution, so $\ell$ is maximised iteratively with BFGS, a
+no closed-form solution, so $\ell$ is maximized iteratively with BFGS, a
 quasi-Newton method. Writing $\theta = (\alpha, \beta)$, each step is
 \[
   \theta^{(t+1)} = \theta^{(t)} + s_t B_t \nabla \ell\bigl(\theta^{(t)}\bigr),
@@ -695,7 +695,7 @@ negative Hessian, updated from the change in the gradient between steps.
 Since $\ell$ is concave in $(\alpha, \beta)$, this reaches the global
 maximum.
 
-For the EM model, $\ell(\Psi)$ is maximised with the algorithm of the
+For the EM model, $\ell(\Psi)$ is maximized with the algorithm of the
 previous section, in which the update for $(\alpha, \beta)$ in each M-step
 also uses BFGS. We then evaluate $\ell$ at the converged parameters. This
 likelihood need not be concave, so a fit may stop at a local maximum.
@@ -968,7 +968,7 @@ this directly.
 
 The models are evaluated once on the test set, which contains patients not
 used for fitting. The coefficients are frozen and the test features are
-standardised with the training means and standard deviations. One test
+standardized with the training means and standard deviations. One test
 nodule with missing solidity is excluded, leaving $827$ nodules from $261$
 patients.
 
@@ -1066,7 +1066,7 @@ of which the readers do not all agree.
 
 All the models are closer to the other readers' median than a single reader
 is. This should not be overstated, because the constant baseline is too: MAE
-rewards predictions near the centre of the scale, whereas an individual
+rewards predictions near the center of the scale, whereas an individual
 reader's rating varies. The benchmark therefore shows that much of the error
 reflects disagreement between readers, not that the models outperform
 radiologists.
@@ -1090,7 +1090,7 @@ radiologists.
     they go straight to $1$ or $5$, which raises the MAE and RMSE. In
     addition, the
     EM model is fitted to individual ratings, whereas these errors are measured
-    against the median, which favours the naive models.
+    against the median, which favors the naive models.
     \ii \textbf{Missing calcification:} Calcification is excluded from our
     models, although calcified nodules are rated much lower (mean grade $1.22$
     against $3.02$). These $87$ nodules are $10.5\%$ of the test set but
@@ -1122,7 +1122,7 @@ radiologists.
 \section{Policy Interpretation}
 
 Most lung nodules are benign, and radiologist time is limited in public health
-systems. We therefore ask whether a model could help prioritise nodules for
+systems. We therefore ask whether a model could help prioritize nodules for
 review. This is a second-reader setting: the model would decide which nodules
 are reviewed first, not which are reviewed at all, and it would not replace a
 radiologist.
@@ -1184,7 +1184,7 @@ probabilities are still useful for ordering nodules.
     more complex model.
     \ii The naive secondary model should not be used for triage, as its
     semantic ratings require the radiologist review that triage is meant to
-    prioritise.
+    prioritize.
     \ii The rule should never be used to dismiss a nodule. It misses $14$ of
     the $161$ high-grade test nodules, and each of these should still receive a
     routine review.
@@ -1206,14 +1206,14 @@ probabilities are still useful for ordering nodules.
     and the $90\%$ sensitivity target is an illustrative choice. A
     real deployment would
     need to set it based on the clinical cost of a missed nodule.
-    \ii \textbf{Generalisation:} LIDC-IDRI is a research dataset from a small
-    number of centres in the United States, so its use in a different setting,
+    \ii \textbf{Generalization:} LIDC-IDRI is a research dataset from a small
+    number of centers in the United States, so its use in a different setting,
     such as Indian public hospitals, is untested.
 \end{itemize}
 
 \section{Conclusion}
 
-This study modelled radiologists' malignancy ratings of lung nodules in the
+This study modeled radiologists' malignancy ratings of lung nodules in the
 LIDC-IDRI database. We fitted a proportional odds model to the median rating,
 first with geometric features and then with semantic ratings added, and a
 latent-grade model, fitted by the EM algorithm, that treats each nodule's true
@@ -1236,7 +1236,7 @@ On the test set, the models predict exact grades poorly. The naive secondary
 model does best, with a misclassification rate of $48.6\%$ against $51.2\%$ for
 always predicting grade $3$, and the naive primary model barely improves on this
 baseline. The EM model does not improve on it, and has a higher MAE and RMSE.
-Modelling the latent grade therefore gave no predictive benefit here, which
+Modeling the latent grade therefore gave no predictive benefit here, which
 suggests that the median rating is an adequate summary for prediction. Much of
 the remaining error reflects disagreement between readers, as a single reader
 differs from the other readers by $0.74$ grades on average.
@@ -1244,7 +1244,7 @@ differs from the other readers by $0.74$ grades on average.
 The models are more useful for ordering nodules than for assigning grades. A
 triage rule based on the naive primary model flags $91.3\%$ of high-grade test
 nodules while flagging $47.0\%$ of all nodules. This supports further study of
-such a model as an aid to prioritising review, but not as a replacement for a
+such a model as an aid to prioritizing review, but not as a replacement for a
 radiologist.
 
 These conclusions are limited by the use of radiologists' suspicion rather than
