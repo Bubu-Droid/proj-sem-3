@@ -1,5 +1,5 @@
 [project]
-name = "proj-sem-3"
+name = "lung-cancer-logistic-reg-sem-3"
 version = "0.1.0"
 description = "Ordinal modelling of LIDC-IDRI nodule malignancy"
 requires-python = ">=3.11,<3.12"
