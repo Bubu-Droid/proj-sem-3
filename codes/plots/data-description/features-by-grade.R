@@ -10,8 +10,8 @@ LABELS <- c(log_volume = "log Volume", elongation = "Elongation",
 BLUE <- "#4c72b0"
 
 pdf("codes/plots/data-description/features-by-grade.pdf", width = 10, height = 5.5)
-par(mfrow = c(2, 3), mar = c(4, 4, 2.5, 1), las = 1, col.axis = "grey25", col.lab = "grey25", font.main = 1, cex.main = 1, col.main = "grey20")
+par(mfrow = c(2, 3), mar = c(4, 4, 2.5, 1), las = 1, col.axis = "gray25", col.lab = "gray25", font.main = 1, cex.main = 1, col.main = "gray20")
 for (v in GEOM)
-  boxplot(nod[[v]] ~ nod$mal_median, col = BLUE, border = "grey25",
+  boxplot(nod[[v]] ~ nod$mal_median, col = BLUE, border = "gray25",
           outcex = 0.4, main = LABELS[[v]], xlab = "Median malignancy", ylab = "")
 invisible(dev.off())

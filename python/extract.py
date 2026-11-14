@@ -58,7 +58,7 @@ def shape_features(ann, scan):
             out["elongation"] = np.sqrt(max(ev[1], 0) / ev[0])
             out["flatness"] = np.sqrt(max(ev[2], 0) / ev[0])
     # Convex hull measured in voxels, so solidity is in (0, 1]. A mask one voxel
-    # thick along some axis (e.g. a nodule drawn on a single slice) is flat, so
+    # thick along some axis (e.g., a nodule drawn on a single slice) is flat, so
     # take the hull in the remaining axes. Other flat masks give an empty hull.
     flat = np.squeeze(mask)
     if flat.ndim >= 2:

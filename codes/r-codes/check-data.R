@@ -39,7 +39,7 @@ for (v in names(ranges))
         sprintf("%s in 1..%d", v, ranges[[v]]))
 bad_is <- sum(!raw$internalStructure %in% 1:4)
 if (bad_is > 0) {
-  warn(sprintf("internalStructure outside 1..4 in %d annotation(s); column is not modelled",
+  warn(sprintf("internalStructure outside 1..4 in %d annotation(s); column is not modeled",
                bad_is))
 } else check(TRUE, "internalStructure in 1..4")
 
@@ -96,7 +96,7 @@ check(nrow(trn) + nrow(tst) == nrow(nod), "train + test = all nodules")
 check(setequal(trn$nodule_id, nod$nodule_id[nod$split == "train"]),
       "train file matches split column")
 check(!any(c("calcification", "internalStructure", "split") %in% names(trn)),
-      "nominal ratings and split excluded from modelling tables")
+      "nominal ratings and split excluded from modeling tables")
 check(all(c("calcification", "internalStructure") %in% names(nod)),
       "nominal ratings kept in master table")
 frac <- length(unique(trn$patient_id)) / length(unique(nod$patient_id))

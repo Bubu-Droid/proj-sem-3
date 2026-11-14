@@ -1,5 +1,5 @@
 # Naive proportional odds models for median malignancy (STEPS.md Step 4).
-# Predictors are standardised with training-set means and SDs.
+# Predictors are standardized with training-set means and SDs.
 #
 # Run from the repository root:
 #   Rscript codes/r-codes/polr-fit.R

@@ -1,5 +1,5 @@
 # Hypothesis tests for the naive proportional odds models (STEPS.md Step 6).
-# Predictors are standardised with training-set means and SDs.
+# Predictors are standardized with training-set means and SDs.
 #
 # Run from the repository root:
 #   Rscript codes/r-codes/hypo-test.R

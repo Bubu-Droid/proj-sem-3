@@ -1,5 +1,5 @@
 # EM fit of the latent true-grade model (STEPS.md Step 5) on the training nodules.
-# Predictors are the primary features, standardised with training-set means and SDs.
+# Predictors are the primary features, standardized with training-set means and SDs.
 # Ratings come from nodules_train_trimmed.csv (see clean-data.R).
 #
 # Run from the repository root:

@@ -32,12 +32,12 @@ errors <- function(pred) {
 # ======================================
 
 naive <- train_trim[complete.cases(train_trim[c(ALL, "mal_median")]), ]
-centre <- colMeans(naive[ALL])
+center <- colMeans(naive[ALL])
 spread <- apply(naive[ALL], 2, sd)
-naive[ALL] <- scale(naive[ALL], centre, spread)
+naive[ALL] <- scale(naive[ALL], center, spread)
 naive$y <- factor(naive$mal_median, levels = 1:K, ordered = TRUE)
 test_naive <- test
-test_naive[ALL] <- scale(test[ALL], centre, spread)
+test_naive[ALL] <- scale(test[ALL], center, spread)
 
 fit_primary <- polr(reformulate(PRIMARY, "y"), data = naive, method = "logistic")
 fit_secondary <- polr(reformulate(ALL, "y"), data = naive, method = "logistic")
@@ -98,7 +98,7 @@ for (t in seq_len(MAX_ITER)) {
 }
 cat(sprintf("EM log-likelihood: %.3f, iterations %d\n\n", ll, t))
 
-# Standardise with the EM fit's means and SDs, then convert to the rating scale
+# Standardize with the EM fit's means and SDs, then convert to the rating scale
 X_test <- scale(test[PRIMARY], attr(X, "scaled:center"), attr(X, "scaled:scale"))
 rating_probs <- grade_probs(X_test, alpha, beta) %*% Pi
 pred_em <- max.col(rating_probs, "first")

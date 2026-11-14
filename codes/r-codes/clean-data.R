@@ -2,8 +2,8 @@
 #
 # Outputs (data/processed/):
 #   nodules.csv        master table, one row per nodule, all columns + split
-#   nodules_train.csv  modelling table, training patients
-#   nodules_test.csv   modelling table, test patients
+#   nodules_train.csv  modeling table, training patients
+#   nodules_test.csv   modeling table, test patients
 #   nodules_train_trimmed.csv  training table without outlying ratings
 #   median_ties.csv    nodules whose median malignancy fell between two grades
 #
@@ -22,7 +22,7 @@ K <- 5
 
 # ---- Clusters with more than 4 annotations ---------------------------------
 # LIDC had 4 readers per scan, so a cluster of 5+ means cluster_annotations()
-# merged neighbouring lesions. Drop them.
+# merged neighboring lesions. Drop them.
 too_big <- unique(raw$nodule_id[raw$n_readers > 4])
 cat(sprintf("dropping %d clusters with > 4 annotations (%d annotations)\n",
             length(too_big), sum(raw$nodule_id %in% too_big)))

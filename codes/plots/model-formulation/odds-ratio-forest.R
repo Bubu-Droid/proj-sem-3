@@ -26,11 +26,11 @@ y <- rev(seq_along(ALL))
 names(y) <- ALL
 
 pdf("codes/plots/model-formulation/odds-ratio-forest.pdf", width = 7.5, height = 5)
-par(mar = c(4.2, 7, 0.8, 0.8), las = 1, col.axis = "grey25", col.lab = "grey25", fg = "grey60")
+par(mar = c(4.2, 7, 0.8, 0.8), las = 1, col.axis = "gray25", col.lab = "gray25", fg = "gray60")
 plot(NA, xlim = c(0.5, 6), ylim = c(0.4, length(ALL) + 0.6), log = "x", yaxt = "n",
      xlab = "Odds ratio per 1 SD increase (log scale)", ylab = "", bty = "n")
 axis(2, y, ALL, tick = FALSE, family = "mono", cex.axis = 0.8)
-abline(v = 1, col = "grey55", lty = 2)
+abline(v = 1, col = "gray55", lty = 2)
 segments(prim$low, y[PRIMARY] + 0.2, prim$high, y[PRIMARY] + 0.2, col = BLUE, lwd = 2)
 points(prim$est, y[PRIMARY] + 0.2, pch = 16, col = BLUE, cex = 1.1)
 segments(sec$low, y[ALL], sec$high, y[ALL], col = ORANGE, lwd = 2)
@@ -38,5 +38,5 @@ points(sec$est, y[ALL], pch = 15, col = ORANGE, cex = 1.1)
 points(em_or[PRIMARY], y[PRIMARY] - 0.2, pch = 17, col = GREEN, cex = 1.1)
 legend("bottomright", c("Naive primary (95% CI)", "Naive secondary (95% CI)", "EM (no CI)"),
        col = c(BLUE, ORANGE, GREEN), pch = c(16, 15, 17), lty = c(1, 1, NA), lwd = 2,
-       bty = "n", cex = 0.85, text.col = "grey20")
+       bty = "n", cex = 0.85, text.col = "gray20")
 invisible(dev.off())
